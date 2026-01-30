@@ -18,9 +18,7 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isDark, setIsDark] = useState(false);
-
-  const theme = isDark ? themes.dark : themes.light;
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -32,13 +30,16 @@ export const AppProvider = ({ children }) => {
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
-            setUserData(userDoc.data());
+            const data = userDoc.data();
+            setUserData(data);
+            setIsAdmin(data.role === 'admin');
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
       } else {
         setUserData(null);
+        setIsAdmin(false);
       }
       
       setLoading(false);
@@ -47,15 +48,12 @@ export const AppProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const toggleTheme = () => setIsDark(!isDark);
-
   const value = {
     user,
     userData,
     loading,
-    theme,
-    isDark,
-    toggleTheme,
+    isAdmin,
+    isDark: true, // Always dark theme
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

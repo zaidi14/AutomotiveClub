@@ -8,279 +8,303 @@ import {
   StyleSheet,
   Dimensions,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
+import { db } from '../config/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
 export default function AnnouncementsScreen() {
-  const { isDark } = useApp();
   const [refreshing, setRefreshing] = useState(false);
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: 'OtoZirve 2026',
-      date: 'February 15, 2026',
-      time: '14:00',
-      location: 'Sümer Campus Conference Hall',
-      description: 'Annual automotive industry summit featuring guest speakers from leading manufacturers.',
-      type: 'Conference',
-    },
-    {
-      id: 2,
-      title: 'AutoDebate: Electric vs Hybrid',
-      date: 'February 22, 2026',
-      time: '18:30',
-      location: 'Engineering Building, Room 301',
-      description: 'Join us for a heated debate on the future of automotive propulsion systems.',
-      type: 'Discussion',
-    },
-    {
-      id: 3,
-      title: 'AutoSinema: Rush (2013)',
-      date: 'March 5, 2026',
-      time: '20:00',
-      location: 'Campus Open Air Cinema',
-      description: 'Movie night featuring the legendary F1 rivalry between Hunt and Lauda.',
-      type: 'Entertainment',
-    },
-    {
-      id: 4,
-      title: 'Track Day Experience',
-      date: 'March 12, 2026',
-      time: '09:00',
-      location: 'İzmir Racing Circuit',
-      description: 'Exclusive track day for club members. Limited spots available.',
-      type: 'Activity',
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState([]);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
+
+  useEffect(() => {
+    try {
+      const q = query(
+        collection(db, 'announcements'),
+        orderBy('date', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEvents(data);
+        setLoading(false);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error fetching announcements:', error);
+      setLoading(false);
+    }
+  }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    // Simulate API call
     setTimeout(() => {
       setRefreshing(false);
     }, 1500);
   };
 
   const getTypeColor = (type) => {
-    switch (type) {
-      case 'Conference':
-        return colors.accent;
-      case 'Discussion':
-        return '#FF9800';
-      case 'Entertainment':
-        return '#9C27B0';
-      case 'Activity':
-        return '#4CAF50';
-      default:
-        return colors.primary;
-    }
+    const typeColors = {
+      Conference: { bg: 'rgba(50, 130, 184, 0.1)', color: '#3282b8' },
+      Discussion: { bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
+      Entertainment: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
+      Activity: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+    };
+    return typeColors[type] || typeColors.Conference;
   };
 
-  const handleReminder = (eventTitle) => {
-    // TODO: Implement reminder/notification logic
-    alert(`Reminder set for ${eventTitle}`);
-  };
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
+      <StatusBar barStyle="light-content" backgroundColor={colors.darkBg} />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
+        showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.headerSection}>
-          <Text style={styles.titleText}>Announcements</Text>
-          <Text style={styles.subtitleText}>Stay updated with club events</Text>
+          <Text style={styles.subtitle}>Community</Text>
+          <Text style={styles.title}>Announcements</Text>
+          <Text style={styles.description}>Stay updated with upcoming events and news</Text>
         </View>
 
         {/* Events List */}
         <View style={styles.eventsContainer}>
-          {events.map((event) => (
-            <View key={event.id} style={styles.eventCard}>
-              {/* Type Badge */}
-              <View style={[styles.typeBadge, { backgroundColor: getTypeColor(event.type) }]}>
-                <Text style={styles.typeText}>{event.type.toUpperCase()}</Text>
-              </View>
-
-              {/* Event Title */}
-              <Text style={styles.eventTitle}>{event.title}</Text>
-
-              {/* Date & Time */}
-              <View style={styles.infoRow}>
-                <Text style={styles.infoIcon}>📅</Text>
-                <Text style={styles.infoText}>{event.date}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoIcon}>🕐</Text>
-                <Text style={styles.infoText}>{event.time}</Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoIcon}>📍</Text>
-                <Text style={styles.infoText}>{event.location}</Text>
-              </View>
-
-              {/* Description */}
-              <Text style={styles.description}>{event.description}</Text>
-
-              {/* Action Buttons */}
-              <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => handleReminder(event.title)}
-                >
-                  <Text style={styles.primaryButtonText}>Set Reminder</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.secondaryButton}>
-                  <Text style={styles.secondaryButtonText}>Details</Text>
-                </TouchableOpacity>
-              </View>
+          {events.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>📭</Text>
+              <Text style={styles.emptyText}>No announcements yet</Text>
+              <Text style={styles.emptyDesc}>Check back soon for upcoming events</Text>
             </View>
-          ))}
-        </View>
+          ) : (
+            events.map((event, index) => {
+              const typeColor = getTypeColor(event.type);
+              return (
+                <View key={event.id} style={styles.eventCard}>
+                  {/* Left Timeline Dot */}
+                  <View style={styles.timelineContainer}>
+                    <View style={styles.timelineDot} />
+                    {index < events.length - 1 && <View style={styles.timelineLine} />}
+                  </View>
 
-        {/* Empty State for Future Integration */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardText}>
-            🔗 This section will automatically sync with aguautomotiveclub.com events
-          </Text>
+                  {/* Event Content */}
+                  <View style={styles.eventContent}>
+                    {/* Type Badge */}
+                    <View
+                      style={[styles.typeBadge, { backgroundColor: typeColor.bg }]}
+                    >
+                      <Text style={[styles.typeText, { color: typeColor.color }]}>
+                        {event.type}
+                      </Text>
+                    </View>
+
+                    {/* Title */}
+                    <Text style={styles.eventTitle}>{event.title}</Text>
+
+                    {/* Event Details */}
+                    <View style={styles.detailsContainer}>
+                      <View style={styles.detail}>
+                        <Text style={styles.detailIcon}>📅</Text>
+                        <Text style={styles.detailText}>
+                          {event.date?.toDate
+                            ? event.date.toDate().toLocaleDateString()
+                            : event.date}
+                        </Text>
+                      </View>
+                      <View style={styles.detail}>
+                        <Text style={styles.detailIcon}>🕐</Text>
+                        <Text style={styles.detailText}>{event.time}</Text>
+                      </View>
+                    </View>
+
+                    {/* Location */}
+                    <View style={styles.detail}>
+                      <Text style={styles.detailIcon}>📍</Text>
+                      <Text style={styles.detailText}>{event.location}</Text>
+                    </View>
+
+                    {/* Description */}
+                    <Text style={styles.description}>{event.description}</Text>
+
+                    {/* Action Button */}
+                    <TouchableOpacity style={styles.reminderBtn}>
+                      <Text style={styles.reminderBtnText}>Set Reminder</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (isDark) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingTop: 50,
-  },
-  headerSection: {
-    marginBottom: 24,
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.primary,
-    marginBottom: 8,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: isDark ? colors.silver : colors.subText,
-  },
-  eventsContainer: {
-    gap: 16,
-  },
-  eventCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
-  },
-  typeBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  typeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: colors.lightText,
-    letterSpacing: 0.5,
-  },
-  eventTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.primary,
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  infoIcon: {
-    fontSize: 14,
-    marginRight: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: isDark ? colors.silver : colors.subText,
-  },
-  description: {
-    fontSize: 14,
-    color: isDark ? colors.lightSubText : colors.subText,
-    lineHeight: 20,
-    marginTop: 12,
-    marginBottom: 16,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.lightText,
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? colors.silver : colors.primary,
-  },
-  infoCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 24,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-  },
-  infoCardText: {
-    fontSize: 12,
-    color: isDark ? colors.silver : colors.subText,
-    textAlign: 'center',
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkBg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 32,
+    },
+    headerSection: {
+      marginBottom: 32,
+    },
+    subtitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.accentLight,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 4,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: 0.5,
+      marginBottom: 8,
+    },
+    description: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    eventsContainer: {
+      gap: 0,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 48,
+    },
+    emptyIcon: {
+      fontSize: 64,
+      marginBottom: 16,
+    },
+    emptyText: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    emptyDesc: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    eventCard: {
+      flexDirection: 'row',
+      marginBottom: 0,
+      paddingBottom: 24,
+    },
+    timelineContainer: {
+      alignItems: 'center',
+      marginRight: 16,
+      paddingTop: 4,
+    },
+    timelineDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      backgroundColor: colors.accent,
+      marginBottom: 8,
+    },
+    timelineLine: {
+      width: 2,
+      flex: 1,
+      backgroundColor: colors.border,
+      minHeight: 80,
+    },
+    eventContent: {
+      flex: 1,
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    typeBadge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+      marginBottom: 12,
+    },
+    typeText: {
+      fontSize: 11,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    eventTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 12,
+    },
+    detailsContainer: {
+      flexDirection: 'row',
+      gap: 16,
+      marginBottom: 12,
+    },
+    detail: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    detailIcon: {
+      fontSize: 16,
+    },
+    detailText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    reminderBtn: {
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      backgroundColor: 'rgba(15, 76, 117, 0.2)',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      alignItems: 'center',
+    },
+    reminderBtnText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.accentLight,
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+    },
+  });
