@@ -5,96 +5,104 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
   StyleSheet,
   Dimensions,
   Modal,
   Alert,
-  ActivityIndicator,
-  RefreshControl,
+  Linking,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
-import { db } from '../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 const { width } = Dimensions.get('window');
 
 export default function AutoNewsScreen() {
   const { isDark } = useApp();
   const [selectedPdf, setSelectedPdf] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [newsletters, setNewsletters] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newsletters, setNewsletters] = useState([
+    {
+      id: 1,
+      title: 'AutoNews January 2026',
+      subtitle: 'New Year, New Innovations',
+      date: 'January 2026',
+      pages: 12,
+      size: '2.4 MB',
+      url: 'https://example.com/autonews-jan-2026.pdf', // Replace with actual PDF URL
+      topics: ['Electric Vehicles', 'F1 Updates', 'Industry News'],
+    },
+    {
+      id: 2,
+      title: 'AutoNews December 2025',
+      subtitle: 'Year in Review Special',
+      date: 'December 2025',
+      pages: 24,
+      size: '4.1 MB',
+      url: 'https://example.com/autonews-dec-2025.pdf',
+      topics: ['Top 10 Cars', 'Tech Breakthroughs', 'Club Highlights'],
+    },
+    {
+      id: 3,
+      title: 'AutoNews November 2025',
+      subtitle: 'Motorsport Season Finale',
+      date: 'November 2025',
+      pages: 16,
+      size: '3.2 MB',
+      url: 'https://example.com/autonews-nov-2025.pdf',
+      topics: ['F1 Championship', 'WEC Finals', 'Rally Review'],
+    },
+  ]);
 
   const styles = createStyles(isDark);
-
-  useEffect(() => {
-    loadNewsletters();
-  }, []);
-
-  const loadNewsletters = async () => {
-    try {
-      setLoading(true);
-      const snapshot = await getDocs(collection(db, 'news'));
-      const newsList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setNewsletters(newsList);
-    } catch (error) {
-      console.error('Error loading newsletters:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadNewsletters().then(() => setRefreshing(false));
-  };
 
   const handleDownload = async (newsletter) => {
     try {
       Alert.alert('Download', `Downloading ${newsletter.title}...`);
       // TODO: Implement actual PDF download
+      // const downloadResumable = FileSystem.createDownloadResumable(
+      //   newsletter.url,
+      //   FileSystem.documentDirectory + `${newsletter.title}.pdf`
+      // );
+      // const { uri } = await downloadResumable.downloadAsync();
+      // await Sharing.shareAsync(uri);
     } catch (error) {
-      Alert.alert('Error', 'Failed to download PDF');
+      console.log('Error fetching newsletters:', error);
+      setLoading(false);
     }
   };
 
-  const handleView = (newsletter) => {
-    // TODO: Implement PDF viewer with react-native-pdf
-    Alert.alert('PDF Viewer', `Opening ${newsletter.title}\n\nPDF viewer will be implemented here.`);
+  const openDocument = (url) => {
+    if (url) {
+      Linking.openURL(url);
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
+      <StatusBar barStyle="light-content" backgroundColor={colors.darkBg} />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
       >
         {/* Header */}
         <View style={styles.headerSection}>
-          <Text style={styles.titleText}>AutoNews</Text>
-          <Text style={styles.subtitleText}>Monthly newsletter & industry reports</Text>
+          <Text style={styles.subtitle}>Resources</Text>
+          <Text style={styles.title}>News & Articles</Text>
+          <Text style={styles.description}>Latest automotive news and publications</Text>
         </View>
 
-        {/* Loading State */}
-        {loading && !refreshing ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent} />
-          </View>
-        ) : newsletters.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No newsletters yet</Text>
-          </View>
-        ) : (
-          <>
         {/* Newsstand Grid */}
         <View style={styles.gridContainer}>
           {newsletters.map((newsletter) => (
@@ -122,57 +130,55 @@ export default function AutoNewsScreen() {
                     <Text style={styles.metaIcon}>📅</Text>
                     <Text style={styles.metaText}>{newsletter.date}</Text>
                   </View>
-                  <View style={styles.metaItem}>
-                    <Text style={styles.metaIcon}>📄</Text>
-                    <Text style={styles.metaText}>{newsletter.pages} pages</Text>
+                  <View style={styles.cardMeta}>
+                    <Text style={styles.pages}>{newsletter.pages || '?'} Pages</Text>
+                    <Text style={styles.size}>{newsletter.size || 'PDF'}</Text>
                   </View>
                 </View>
 
-                <View style={styles.metaRow}>
-                  <View style={styles.metaItem}>
-                    <Text style={styles.metaIcon}>💾</Text>
-                    <Text style={styles.metaText}>{newsletter.size}</Text>
-                  </View>
-                </View>
+                {/* Card Content */}
+                <Text style={styles.cardTitle}>{newsletter.title}</Text>
+                {newsletter.subtitle && (
+                  <Text style={styles.cardSubtitle}>{newsletter.subtitle}</Text>
+                )}
 
                 {/* Topics */}
-                <View style={styles.topicsContainer}>
-                  {newsletter.topics.map((topic, index) => (
-                    <View key={index} style={styles.topicBadge}>
-                      <Text style={styles.topicText}>{topic}</Text>
-                    </View>
-                  ))}
-                </View>
+                {newsletter.topics && newsletter.topics.length > 0 && (
+                  <View style={styles.topicsContainer}>
+                    {newsletter.topics.slice(0, 3).map((topic, index) => (
+                      <View key={index} style={styles.topicTag}>
+                        <Text style={styles.topicText}>{topic}</Text>
+                      </View>
+                    ))}
+                    {newsletter.topics.length > 3 && (
+                      <View style={styles.topicTag}>
+                        <Text style={styles.topicText}>+{newsletter.topics.length - 3}</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
 
-                {/* Action Buttons */}
-                <View style={styles.actionRow}>
+                {/* Card Footer */}
+                <View style={styles.cardFooter}>
+                  <View style={styles.dateContainer}>
+                    <Text style={styles.dateIcon}>📅</Text>
+                    <Text style={styles.dateText}>
+                      {newsletter.date?.toDate
+                        ? newsletter.date.toDate().toLocaleDateString()
+                        : newsletter.date}
+                    </Text>
+                  </View>
                   <TouchableOpacity
-                    style={styles.viewButton}
-                    onPress={() => handleView(newsletter)}
+                    style={styles.openButton}
+                    onPress={() => openDocument(newsletter.url)}
                   >
-                    <Text style={styles.viewButtonText}>📖 Read</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.downloadButton}
-                    onPress={() => handleDownload(newsletter)}
-                  >
-                    <Text style={styles.downloadButtonText}>⬇️</Text>
+                    <Text style={styles.openButtonText}>Open →</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           ))}
         </View>
-
-        {/* Info Card */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardText}>
-            📚 New newsletters are published monthly. PDFs can be read offline once downloaded.
-          </Text>
-        </View>
-          </>
-        )}
       </ScrollView>
     </View>
   );
@@ -190,20 +196,6 @@ const createStyles = (isDark) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     paddingTop: 50,
-  },
-  loadingContainer: {
-    paddingVertical: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    paddingVertical: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: isDark ? colors.lightSubText : colors.subText,
-    fontSize: 16,
   },
   headerSection: {
     marginBottom: 24,

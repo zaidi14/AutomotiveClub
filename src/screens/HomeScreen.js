@@ -8,258 +8,412 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
-import { useApp } from '../context/AppContext';
 import { signOut } from '../services/authService';
 import { colors } from '../styles/colors';
+import { useApp } from '../context/AppContext';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
-  const { isDark, user, userData, toggleTheme } = useApp();
+  const { user, userData } = useApp();
   const [refreshing, setRefreshing] = useState(false);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await signOut();
-            if (!result.success) {
-              Alert.alert('Error', result.error);
-            }
-          }
-        }
-      ]
-    );
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut();
+        },
+      },
+    ]);
   };
 
   if (!userData) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   const stats = [
     {
-      label: 'Orders',
+      id: 1,
+      label: 'Total Orders',
       value: userData.totalOrders || 0,
-      icon: '📦',
+      displayValue: userData.totalOrders || 0,
+      icon: '⊙',
+      subtitle: 'TRIPS',
     },
     {
-      label: 'Spent',
-      value: `₺${(userData.lifetimeSpend || 0).toFixed(2)}`,
-      icon: '💰',
+      id: 2,
+      label: 'Amount Spent',
+      value: `₺${(userData.lifetimeSpend || 0).toFixed(0)}`,
+      displayValue: `₺${(userData.lifetimeSpend || 0).toFixed(0)}`,
+      icon: '⛽',
+      subtitle: 'FUEL',
     },
     {
-      label: 'Saved',
-      value: `₺${(userData.lifetimeSavings || 0).toFixed(2)}`,
-      icon: '💎',
-    }
+      id: 3,
+      label: 'Total Savings',
+      value: `₺${(userData.lifetimeSavings || 0).toFixed(0)}`,
+      displayValue: `₺${(userData.lifetimeSavings || 0).toFixed(0)}`,
+      icon: '◉',
+      subtitle: 'SAVED',
+    },
   ];
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
-      <ScrollView 
+      <StatusBar barStyle="light-content" backgroundColor={colors.darkBg} />
+
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.headerContainer}>
-          <View>
-            <Text style={styles.welcomeText}>Welcome back,</Text>
-            <Text style={styles.nameText}>{userData.name || 'User'}</Text>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Text style={styles.greeting}>Welcome back,</Text>
+            <Text style={styles.userName}>{userData.name || 'Member'}</Text>
           </View>
-          
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={toggleTheme}
-            >
-              <Text style={styles.actionIcon}>{isDark ? '☀️' : '🌙'}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleLogout}
-            >
-              <Text style={styles.actionIcon}>🚪</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.logoutIcon}>⏻</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Card Info */}
+        <View style={styles.memberCard}>
+          <View style={styles.memberCardHeader}>
+            <Text style={styles.memberCardTitle}>Member Status</Text>
+            <Text style={styles.memberCardBadge}>✓ Active</Text>
+          </View>
+          <View style={styles.memberCardBody}>
+            <View style={styles.memberInfo}>
+              <Text style={styles.memberLabel}>Student ID</Text>
+              <Text style={styles.memberValue}>{userData.studentId}</Text>
+            </View>
+            <View style={styles.memberDivider} />
+            <View style={styles.memberInfo}>
+              <Text style={styles.memberLabel}>Email</Text>
+              <Text style={styles.memberValue}>{userData.email}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          {stats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <Text style={styles.statIcon}>{stat.icon}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
+        {/* Stats Section - Dashboard Gauges */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>⚡ DASHBOARD</Text>
+          <View style={styles.statsGrid}>
+            {stats.map((stat) => (
+              <View key={stat.id} style={styles.statCard}>
+                <View style={styles.gaugeContainer}>
+                  <View style={styles.gaugeOuter}>
+                    <View style={styles.gaugeInner}>
+                      <Text style={styles.statIconText}>{stat.displayValue}</Text>
+                    </View>
+                  </View>
+                </View>
+                <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Quick Actions - Racing Theme */}
+        <View style={styles.actionsSection}>
+          <Text style={styles.sectionTitle}>🏁 QUICK ACCESS</Text>
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => navigation.navigate('Billing')}
+          >
+            <View style={styles.racingStripe} />
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>UPLOAD BILL</Text>
+              <Text style={styles.actionDesc}>Track your automotive purchases</Text>
             </View>
-          ))}
+            <Text style={styles.actionArrow}>▶</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Favorite Restaurant */}
         {userData.favoriteRestaurant && (
-          <View style={styles.favoriteCard}>
-            <Text style={styles.favLabel}>⭐ Favorite Restaurant</Text>
-            <Text style={styles.favName}>{userData.favoriteRestaurant}</Text>
+          <View style={styles.favSection}>
+            <Text style={styles.sectionTitle}>Favorite Restaurant</Text>
+            <View style={styles.favCard}>
+              <Text style={styles.favIcon}>⭐</Text>
+              <Text style={styles.favName}>{userData.favoriteRestaurant}</Text>
+            </View>
           </View>
         )}
-
-        {/* Upload Bill Button */}
-        <TouchableOpacity
-          style={styles.uploadButton}
-          onPress={() => navigation.navigate('Billing')}
-        >
-          <Text style={styles.uploadButtonText}>📸 Upload New Bill</Text>
-        </TouchableOpacity>
-
-        {/* Student Info Card */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoText}>Student ID: {userData.studentId}</Text>
-          <Text style={styles.infoText}>{userData.email}</Text>
-        </View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (isDark) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    paddingTop: 40,
-  },
-  centerContainer: {
-    flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 24,
-  },
-  welcomeText: {
-    fontSize: 14,
-    color: isDark ? colors.lightSubText : colors.subText,
-    marginBottom: 4,
-  },
-  nameText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.darkText,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionIcon: {
-    fontSize: 20,
-  },
-  statsContainer: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-  },
-  statIcon: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: isDark ? colors.lightSubText : colors.subText,
-    marginBottom: 6,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  favoriteCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
-  },
-  favLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: isDark ? colors.lightSubText : colors.subText,
-    marginBottom: 6,
-  },
-  favName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.darkText,
-  },
-  uploadButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  uploadButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.lightText,
-  },
-  infoCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-  },
-  infoText: {
-    fontSize: 12,
-    color: isDark ? colors.lightSubText : colors.subText,
-    marginBottom: 4,
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkBg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 32,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.darkBg,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 32,
+      paddingTop: 8,
+    },
+    headerContent: {
+      flex: 1,
+    },
+    greeting: {
+      fontSize: 14,
+      color: colors.textMuted,
+      fontWeight: '500',
+      marginBottom: 4,
+    },
+    userName: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: 0.5,
+    },
+    logoutBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: colors.primaryDark,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    logoutIcon: {
+      fontSize: 24,
+      color: colors.lightText,
+    },
+    memberCard: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 32,
+      borderWidth: 2,
+      borderColor: colors.accent,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.accent,
+    },
+    memberCardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    memberCardTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    memberCardBadge: {
+      fontSize: 12,
+      color: '#10B981',
+      backgroundColor: colors.primaryDark,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      fontWeight: '700',
+    },
+    memberCardBody: {
+      gap: 12,
+    },
+    memberInfo: {
+      gap: 4,
+    },
+    memberLabel: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    memberValue: {
+      fontSize: 15,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    memberDivider: {
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    statsSection: {
+      marginBottom: 32,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.lightText,
+      marginBottom: 16,
+      letterSpacing: 1.5,
+    },
+    statsGrid: {
+      gap: 12,
+    },
+    statCard: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 16,
+      padding: 20,
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: colors.accent,
+      flex: 1,
+    },
+    gaugeContainer: {
+      marginBottom: 12,
+    },
+    gaugeOuter: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      borderWidth: 3,
+      borderColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.primaryDark,
+    },
+    gaugeInner: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      borderWidth: 2,
+      borderColor: colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.darkCardBg,
+    },
+    statIconText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.lightText,
+    },
+    statSubtitle: {
+      fontSize: 10,
+      color: colors.accent,
+      fontWeight: '700',
+      letterSpacing: 1,
+    },
+    statValue: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: colors.text,
+      marginBottom: 4,
+    },
+    statLabel: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+    },
+    actionsSection: {
+      marginBottom: 32,
+    },
+    actionCard: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 16,
+      padding: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: colors.accent,
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    racingStripe: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 6,
+      backgroundColor: colors.accent,
+    },
+    actionIconContainer: {
+      width: 56,
+      height: 56,
+      borderRadius: 12,
+      backgroundColor: colors.primaryDark,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+    },
+    actionIcon: {
+      fontSize: 28,
+      color: colors.accent,
+    },
+    actionContent: {
+      flex: 1,
+      paddingLeft: 12,
+    },
+    actionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.lightText,
+      marginBottom: 4,
+      letterSpacing: 1,
+    },
+    actionDesc: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    actionArrow: {
+      fontSize: 20,
+      color: colors.accent,
+      fontWeight: '700',
+    },
+    favSection: {
+      marginBottom: 24,
+    },
+    favCard: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 16,
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(245, 158, 11, 0.3)',
+      borderLeftWidth: 4,
+      borderLeftColor: '#F59E0B',
+    },
+    favIcon: {
+      fontSize: 24,
+      marginRight: 12,
+    },
+    favName: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      flex: 1,
+    },
+  });

@@ -3,8 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AppProvider, useApp } from './src/context/AppContext';
-import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Text, Image } from 'react-native';
 import { colors } from './src/styles/colors';
+import LogoHeader from './src/components/LogoHeader';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -24,7 +25,7 @@ function AuthStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_right'
+        animation: 'slide_from_right',
       }}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
@@ -33,24 +34,38 @@ function AuthStack() {
   );
 }
 
+function HomeStackNavigator() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="Billing" component={BillingScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function MainTabs() {
   const { isDark, userData } = useApp();
   const isAdmin = userData?.role === 'admin';
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-          borderTopColor: isDark ? colors.darkBorder : colors.lightBorder,
+          backgroundColor: colors.darkCardBg,
+          borderTopColor: colors.darkBorder,
           borderTopWidth: 1,
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: isDark ? colors.lightText : colors.accent,
-        tabBarInactiveTintColor: isDark ? colors.lightSubText : colors.subText,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.lightSubText,
         tabBarLabelStyle: {
           fontSize: 12,
           marginTop: -4,
@@ -63,11 +78,7 @@ function MainTabs() {
           if (route.name === 'Web Portal') icon = '🌐';
           if (route.name === 'Admin') icon = '⚙️';
 
-          return (
-            <Text style={{ fontSize: focused ? 22 : 18 }}>
-              {icon}
-            </Text>
-          );
+          return <Text style={{ fontSize: focused ? 22 : 18 }}>{icon}</Text>;
         },
       })}
     >
@@ -102,27 +113,18 @@ function MainTabs() {
   );
 }
 
-function HomeStackNavigator() {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right'
-      }}
-    >
-      <Stack.Screen name="HomeMain" component={HomeScreen} />
-      <Stack.Screen name="Billing" component={BillingScreen} />
-    </Stack.Navigator>
-  );
-}
-
 function AppNavigator() {
-  const { user, loading } = useApp();
+  const { user, loading, isDark } = useApp();
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0177E3" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.darkBg }]}> 
+        <Image
+          source={require('./assets/AC.webp')}
+          style={styles.loadingLogo}
+          resizeMode="contain"
+        />
+        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 20 }} />
       </View>
     );
   }
@@ -139,6 +141,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingLogo: {
+    width: '60%',
+    height: 200,
   },
 });
 

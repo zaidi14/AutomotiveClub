@@ -1,29 +1,34 @@
 export const colors = {
-  // AGU Automotive Club Brand Colors (from logo)
-  primary: '#0A2342',      // Navy Blue (main brand)
-  accent: '#C8102E',       // Red (2022 mark, CTAs)
-  primaryLight: '#1A3A5A', // Lighter Navy
-  primaryDark: '#051628',  // Darker Navy
+  // Dark Navy Automotive Theme - Solid Colors Only
+  primary: '#001f3f',      // Deep Navy Blue (main background)
+  accent: '#C8102E',       // Racing Red (buttons, CTAs, accents)
+  accentLight: '#E63946',  // Lighter Red for hover states
+  primaryLight: '#003366', // Lighter Navy (cards, containers)
+  primaryDark: '#001428',  // Darker Navy (deeper sections)
+  slateGrey: '#4A5568',    // Slate Grey (alternative card bg)
   
-  // Backgrounds
-  darkBg: '#121212',       // Premium dark background
-  darkCardBg: '#1A1A1A',   // Card background
-  lightBg: '#FFFFFF',      // White (light mode)
-  lightCardBg: '#F5F5F5',  // Light Gray
+  // Backgrounds - SOLID ONLY
+  darkBg: '#001f3f',       // Deep Navy Blue - Main Background
+  darkCardBg: '#003366',   // Lighter Navy - Card Background
+  lightBg: '#001f3f',      // Navy (consistent theme)
+  lightCardBg: '#003366',  // Lighter Navy for cards
   
-  // Text colors
-  darkText: '#0A2342',     // Navy text (light mode)
-  lightText: '#FFFFFF',    // White text
+  // Text colors - High Contrast
+  text: '#FFFFFF',         // Bright White text
+  textMuted: '#B0BEC5',    // Muted light text
+  darkText: '#FFFFFF',     // White text (theme consistent)
+  lightText: '#FFFFFF',    // Bright White text
   silver: '#E0E0E0',       // Silver/Gray text
-  subText: '#9E9E9E',      // Gray text
-  lightSubText: '#B0B0B0', // Light gray text
+  subText: '#B0BEC5',      // Light Gray text
+  lightSubText: '#CFD8DC', // Very Light gray text
   
   // Utility colors
   success: '#4CAF50',
-  error: '#C8102E',        // Using brand red for errors
+  error: '#C8102E',        // Racing Red for errors
   warning: '#FF9800',
   
-  // Borders
-  darkBorder: '#2A2A2A',   // Dark border
-  lightBorder: '#E0E0E0',  // Light border
+  // Borders - Solid
+  border: '#003d5c',       // Navy border
+  darkBorder: '#003d5c',   // Navy border
+  lightBorder: '#003d5c',  // Navy border (consistent)
 };

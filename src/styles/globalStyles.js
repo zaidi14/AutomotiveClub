@@ -9,39 +9,41 @@ export const createTheme = (isDark = false) => {
 const lightTheme = {
   container: {
     flex: 1,
-    backgroundColor: colors.lightBg,
+    backgroundColor: colors.darkBg, // Navy background
   },
   safeArea: {
     flex: 1,
-    backgroundColor: colors.lightBg,
+    backgroundColor: colors.darkBg,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: colors.lightBg,
+    backgroundColor: colors.darkBg,
   },
   card: {
-    backgroundColor: colors.lightCardBg,
+    backgroundColor: colors.darkCardBg, // Lighter Navy cards
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
     marginHorizontal: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.darkBorder,
   },
   text: {
-    color: colors.darkText,
+    color: colors.lightText, // White text
     fontSize: 16,
   },
   textLarge: {
-    color: colors.darkText,
+    color: colors.lightText,
     fontSize: 24,
     fontWeight: 'bold',
   },
   textMedium: {
-    color: colors.darkText,
+    color: colors.lightText,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -50,7 +52,7 @@ const lightTheme = {
     fontSize: 14,
   },
   button: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent, // Racing Red
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -65,34 +67,34 @@ const lightTheme = {
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.lightBorder,
+    borderColor: colors.darkBorder,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: colors.darkText,
+    color: colors.lightText,
     marginVertical: 8,
-    backgroundColor: colors.lightBg,
+    backgroundColor: colors.darkCardBg, // Lighter Navy for inputs
   },
   inputPlaceholder: colors.subText,
   header: {
-    backgroundColor: colors.lightBg,
+    backgroundColor: colors.darkCardBg,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.lightBorder,
+    borderBottomColor: colors.darkBorder,
   },
   headerText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.darkText,
+    color: colors.lightText,
   },
 };
 
 const darkTheme = {
   container: {
     flex: 1,
-    backgroundColor: colors.darkBg,
+    backgroundColor: colors.darkBg, // Deep Navy
   },
   safeArea: {
     flex: 1,
@@ -103,7 +105,7 @@ const darkTheme = {
     backgroundColor: colors.darkBg,
   },
   card: {
-    backgroundColor: colors.darkCardBg,
+    backgroundColor: colors.darkCardBg, // Lighter Navy
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
@@ -117,7 +119,7 @@ const darkTheme = {
     borderColor: colors.darkBorder,
   },
   text: {
-    color: colors.lightText,
+    color: colors.lightText, // White text
     fontSize: 16,
   },
   textLarge: {
@@ -135,7 +137,7 @@ const darkTheme = {
     fontSize: 14,
   },
   button: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent, // Racing Red
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -157,7 +159,7 @@ const darkTheme = {
     fontSize: 16,
     color: colors.lightText,
     marginVertical: 8,
-    backgroundColor: colors.darkBg,
+    backgroundColor: colors.darkCardBg, // Lighter Navy for inputs
   },
   inputPlaceholder: colors.lightSubText,
   header: {

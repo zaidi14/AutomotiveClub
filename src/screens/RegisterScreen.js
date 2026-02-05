@@ -2,35 +2,51 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   StatusBar,
-  ActivityIndicator,
-  Alert,
   StyleSheet,
+  Dimensions,
+  Alert,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
-import { useApp } from '../context/AppContext';
-import { signUp } from '../services/authService';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from '../config/firebase';
+import { setDoc, doc } from 'firebase/firestore';
 import { colors } from '../styles/colors';
 
+const { width, height } = Dimensions.get('window');
+
 export default function RegisterScreen({ navigation }) {
-  const { isDark } = useApp();
   const [name, setName] = useState('');
-  const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+
+  const styles = createStyles();
+
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   const handleRegister = async () => {
-    if (!name || !studentId || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter your name');
       return;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+    if (!email.trim() || !validateEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email');
+      return;
+    }
+
+    if (!password) {
+      Alert.alert('Error', 'Password is required');
       return;
     }
 
@@ -39,202 +55,390 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
-    setLoading(true);
-    const result = await signUp(email, password, name, studentId);
-    setLoading(false);
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
 
-    if (!result.success) {
-      Alert.alert('Registration Failed', result.error);
+    if (!agreeTerms) {
+      Alert.alert('Error', 'Please agree to the terms and conditions');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        name: name.trim(),
+        email: email.trim(),
+        createdAt: new Date(),
+        role: 'user',
+      });
+
+      Alert.alert('Success', 'Account created! Please log in.', [
+        { text: 'OK', onPress: () => navigation.navigate('Login') },
+      ]);
+    } catch (error) {
+      Alert.alert('Registration Error', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const styles = createStyles(isDark);
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
-      <ScrollView 
-        style={styles.scrollView}
+      <StatusBar barStyle="light-content" backgroundColor={colors.darkBg} />
+
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* Header Section */}
         <View style={styles.headerSection}>
-          <Text style={styles.titleText}>Create Account</Text>
-          <Text style={styles.subtitleText}>Join AGU Automotive Club</Text>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logo}>🏎️</Text>
+          </View>
+          <Text style={styles.appName}>AGU Automotive Club</Text>
+          <Text style={styles.subtitle}>Join Our Community</Text>
         </View>
 
-        {/* Form */}
-        <View style={styles.formSection}>
-          {/* Full Name */}
-          <View style={styles.inputGroup}>
+        {/* Form Section */}
+        <View style={styles.formContainer}>
+          {/* Name Input */}
+          <View style={styles.formGroup}>
             <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="John Doe"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={name}
-              onChangeText={setName}
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>👤</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Your full name"
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                onChangeText={setName}
+                editable={!loading}
+              />
+            </View>
           </View>
 
-          {/* Student ID */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Student ID</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="123456"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={studentId}
-              onChangeText={setStudentId}
-              keyboardType="numeric"
-            />
+          {/* Email Input */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Email Address</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>✉️</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="your@email.com"
+                placeholderTextColor={colors.textMuted}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
           </View>
 
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="your.email@agu.edu.tr"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputGroup}>
+          {/* Password Input */}
+          <View style={styles.formGroup}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Min. 6 characters"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>🔐</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="At least 6 characters"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.toggleButton}
+              >
+                <Text style={styles.toggleIcon}>
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Confirm Password */}
-          <View style={styles.inputGroup}>
+          {/* Confirm Password Input */}
+          <View style={styles.formGroup}>
             <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Repeat password"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>🔐</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm your password"
+                placeholderTextColor={colors.textMuted}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.toggleButton}
+              >
+                <Text style={styles.toggleIcon}>
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Terms Checkbox */}
+          <View style={styles.termsContainer}>
+            <TouchableOpacity
+              style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}
+              onPress={() => setAgreeTerms(!agreeTerms)}
+            >
+              {agreeTerms && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+            <Text style={styles.termsText}>
+              I agree to the{' '}
+              <Text style={styles.termsLink}>Terms and Conditions</Text>
+            </Text>
           </View>
 
           {/* Sign Up Button */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.registerButton, loading && styles.registerButtonDisabled]}
             onPress={handleRegister}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="white" />
+              <ActivityIndicator size="small" color={colors.text} />
             ) : (
-              <Text style={styles.buttonText}>Sign Up</Text>
+              <>
+                <Text style={styles.registerButtonIcon}>✓</Text>
+                <Text style={styles.registerButtonText}>Create Account</Text>
+              </>
             )}
           </TouchableOpacity>
 
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Already have an account?</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           {/* Login Link */}
           <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => navigation.goBack()}
+            style={styles.loginLink}
+            onPress={() => navigation.navigate('Login')}
+            disabled={loading}
           >
-            <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkBold}>Log In</Text>
-            </Text>
+            <Text style={styles.loginLinkText}>Sign In Instead →</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footerSection}>
+          <Text style={styles.footerText}>
+            Protected by industry-standard security
+          </Text>
+          <Text style={styles.footerIcon}>🔒</Text>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (isDark) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-  },
-  headerSection: {
-    marginBottom: 30,
-    marginTop: 10,
-  },
-  titleText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.darkText,
-    marginBottom: 8,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: isDark ? colors.lightSubText : colors.subText,
-  },
-  formSection: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? colors.lightText : colors.darkText,
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: isDark ? colors.lightText : colors.darkText,
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-  },
-  button: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.lightText,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  linkText: {
-    fontSize: 14,
-    color: isDark ? colors.lightSubText : colors.subText,
-  },
-  linkBold: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkBg,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 32,
+    },
+    headerSection: {
+      alignItems: 'center',
+      marginBottom: 32,
+      marginTop: 8,
+    },
+    logoContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primaryDark,
+      borderWidth: 2,
+      borderColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    logo: {
+      fontSize: 40,
+    },
+    appName: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: 0.5,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+      fontWeight: '600',
+      letterSpacing: 0.3,
+    },
+    formContainer: {
+      gap: 16,
+      marginBottom: 24,
+    },
+    formGroup: {
+      gap: 8,
+    },
+    label: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.text,
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 14,
+      height: 50,
+      gap: 10,
+    },
+    inputIcon: {
+      fontSize: 18,
+    },
+    input: {
+      flex: 1,
+      fontSize: 14,
+      color: colors.text,
+    },
+    toggleButton: {
+      padding: 8,
+    },
+    toggleIcon: {
+      fontSize: 16,
+    },
+    termsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 8,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkboxChecked: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    checkmark: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    termsText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      flex: 1,
+    },
+    termsLink: {
+      color: colors.accentLight,
+      fontWeight: '700',
+    },
+    registerButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 12,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 8,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    registerButtonDisabled: {
+      backgroundColor: colors.slateGrey,
+    },
+    registerButtonIcon: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    registerButtonText: {
+      fontSize: 14,
+      fontWeight: '800',
+      color: colors.text,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    divider: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 20,
+      gap: 12,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    dividerText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '600',
+    },
+    loginLink: {
+      paddingVertical: 12,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+    },
+    loginLinkText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.accentLight,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    footerSection: {
+      alignItems: 'center',
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      gap: 8,
+    },
+    footerText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    footerIcon: {
+      fontSize: 20,
+    },
+  });

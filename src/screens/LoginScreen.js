@@ -10,17 +10,15 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
-import { useApp } from '../context/AppContext';
 import { signIn } from '../services/authService';
 import { colors } from '../styles/colors';
 
 export default function LoginScreen({ navigation }) {
-  const { isDark } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -39,185 +37,266 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.darkBg} />
       
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Logo/Header Area */}
+        {/* Header Section with Logo */}
         <View style={styles.headerSection}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>�</Text>
-            <Text style={styles.logoSubtext}>AGU</Text>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoEmoji}>🏎️</Text>
           </View>
-          <Text style={styles.titleText}>AutoCard</Text>
-          <Text style={styles.subtitleText}>Automotive Club Members Portal</Text>
+          <Text style={styles.brandName}>Automotive Club</Text>
+          <Text style={styles.tagline}>Members Portal</Text>
         </View>
 
         {/* Form Section */}
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Login</Text>
+        <View style={styles.formContainer}>
+          <Text style={styles.formTitle}>Welcome Back</Text>
+          <Text style={styles.formSubtitle}>Sign in to your account</Text>
 
           {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="your.email@agu.edu.tr"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>✉️</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="user@gmail.com"
+                placeholderTextColor={colors.textMuted}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
           </View>
 
           {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor={isDark ? colors.lightSubText : colors.subText}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>🔐</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                editable={!loading}
+              />
+            </View>
           </View>
 
           {/* Login Button */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.loginButton, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="white" />
+              <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.buttonText}>Log In</Text>
+              <Text style={styles.loginButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
 
+          {/* Divider */}
+          <View style={styles.dividerContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>Don't have an account?</Text>
+            <View style={styles.divider} />
+          </View>
+
           {/* Sign Up Link */}
-          <TouchableOpacity
-            style={styles.linkButton}
+          <TouchableOpacity 
+            style={styles.signupButton}
             onPress={() => navigation.navigate('Register')}
           >
-            <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.linkBold}>Sign Up</Text>
-            </Text>
+            <Text style={styles.signupButtonText}>Create New Account</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© 2026 AGU Automotive Club</Text>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (isDark) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-  },
-  headerSection: {
-    alignItems: 'center',
-    marginBottom: 40,
-    marginTop: 20,
-  },
-  logoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 3,
-    borderColor: colors.accent,
-  },
-  logoText: {
-    fontSize: 48,
-  },
-  logoSubtext: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.lightText,
-    marginTop: 4,
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.primary,
-    marginBottom: 8,
-  },
-  subtitleText: {
-    fontSize: 13,
-    color: isDark ? colors.silver : colors.subText,
-  },
-  formSection: {
-    width: '100%',
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.darkText,
-    marginBottom: 24,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? colors.lightText : colors.darkText,
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: isDark ? colors.lightText : colors.darkText,
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-  },
-  button: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.lightText,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  linkText: {
-    fontSize: 14,
-    color: isDark ? colors.lightSubText : colors.subText,
-  },
-  linkBold: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkBg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingHorizontal: 24,
+      paddingTop: 40,
+      paddingBottom: 40,
+    },
+    headerSection: {
+      alignItems: 'center',
+      marginBottom: 48,
+    },
+    logoContainer: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: colors.cardBackground,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    logoEmoji: {
+      fontSize: 50,
+    },
+    brandName: {
+      fontSize: 32,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: 2,
+      marginBottom: 4,
+    },
+    clubName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.accentLight,
+      letterSpacing: 0.5,
+      marginBottom: 8,
+    },
+    tagline: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    formContainer: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 16,
+      padding: 28,
+      marginBottom: 24,
+      borderTopWidth: 3,
+      borderTopColor: colors.accent,
+    },
+    formTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    formSubtitle: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginBottom: 24,
+    },
+    inputWrapper: {
+      marginBottom: 20,
+    },
+    inputLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      marginBottom: 8,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      backgroundColor: colors.darkCardBg,
+      overflow: 'hidden',
+    },
+    inputIcon: {
+      fontSize: 18,
+      marginRight: 12,
+    },
+    input: {
+      flex: 1,
+      paddingVertical: 14,
+      fontSize: 15,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    loginButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 28,
+      marginBottom: 24,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    buttonDisabled: {
+      backgroundColor: colors.slateGrey,
+    },
+    loginButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    dividerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 24,
+    },
+    divider: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    dividerText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginHorizontal: 12,
+      fontWeight: '500',
+    },
+    signupButton: {
+      borderWidth: 1.5,
+      borderColor: colors.accent,
+      borderRadius: 12,
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryDark,
+    },
+    signupButtonText: {
+      color: colors.accentLight,
+      fontSize: 15,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    footer: {
+      alignItems: 'center',
+      marginTop: 32,
+    },
+    footerText: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+  });
