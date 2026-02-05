@@ -401,7 +401,11 @@ const createStyles = () =>
       marginBottom: 8,
     },
     input: {
+<<<<<<< HEAD
       backgroundColor: colors.darkCardBg,
+=======
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       borderRadius: 10,
       paddingHorizontal: 14,
       paddingVertical: 12,
@@ -411,7 +415,11 @@ const createStyles = () =>
       borderColor: colors.border,
     },
     fileSelectButton: {
+<<<<<<< HEAD
       backgroundColor: colors.darkCardBg,
+=======
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       borderRadius: 10,
       padding: 16,
       flexDirection: 'row',
@@ -472,7 +480,11 @@ const createStyles = () =>
       gap: 8,
     },
     submitButtonDisabled: {
+<<<<<<< HEAD
       backgroundColor: colors.slateGrey,
+=======
+      opacity: 0.6,
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     submitButtonIcon: {
       fontSize: 16,
@@ -528,7 +540,11 @@ const createStyles = () =>
       width: 44,
       height: 44,
       borderRadius: 10,
+<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
+=======
+      backgroundColor: 'rgba(200, 16, 46, 0.1)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       justifyContent: 'center',
       alignItems: 'center',
     },

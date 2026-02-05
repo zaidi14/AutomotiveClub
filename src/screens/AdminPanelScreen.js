@@ -173,11 +173,19 @@ const createStyles = () =>
       width: 48,
       height: 48,
       borderRadius: 12,
+<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
       borderColor: colors.accent,
+=======
+      backgroundColor: 'rgba(200, 16, 46, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(200, 16, 46, 0.3)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     logoutIcon: {
       fontSize: 20,
@@ -262,7 +270,11 @@ const createStyles = () =>
       width: 32,
       height: 32,
       borderRadius: 8,
+<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
+=======
+      backgroundColor: 'rgba(15, 76, 117, 0.1)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       justifyContent: 'center',
       alignItems: 'center',
     },

@@ -49,7 +49,12 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.logoContainer}>
             <Text style={styles.logoEmoji}>🏎️</Text>
           </View>
+<<<<<<< HEAD
           <Text style={styles.brandName}>Automotive Club</Text>
+=======
+          <Text style={styles.brandName}>AUTOCARD</Text>
+          <Text style={styles.clubName}>AGU Automotive Club</Text>
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
           <Text style={styles.tagline}>Members Portal</Text>
         </View>
 
@@ -65,7 +70,11 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.inputIcon}>✉️</Text>
               <TextInput
                 style={styles.input}
+<<<<<<< HEAD
                 placeholder="user@gmail.com"
+=======
+                placeholder="you@agu.edu.tr"
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
                 placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
@@ -220,7 +229,11 @@ const createStyles = () =>
       borderColor: colors.border,
       borderRadius: 12,
       paddingHorizontal: 16,
+<<<<<<< HEAD
       backgroundColor: colors.darkCardBg,
+=======
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       overflow: 'hidden',
     },
     inputIcon: {
@@ -250,7 +263,11 @@ const createStyles = () =>
       elevation: 8,
     },
     buttonDisabled: {
+<<<<<<< HEAD
       backgroundColor: colors.slateGrey,
+=======
+      opacity: 0.6,
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     loginButtonText: {
       color: '#fff',
@@ -282,7 +299,11 @@ const createStyles = () =>
       paddingHorizontal: 24,
       alignItems: 'center',
       justifyContent: 'center',
+<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
+=======
+      backgroundColor: 'rgba(15, 76, 117, 0.1)',
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     signupButtonText: {
       color: colors.accentLight,

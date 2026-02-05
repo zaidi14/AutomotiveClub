@@ -8,18 +8,24 @@ import {
   ActivityIndicator,
   StyleSheet,
   Dimensions,
+<<<<<<< HEAD
   Modal,
   Alert,
+=======
+  RefreshControl,
+  ActivityIndicator,
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
   Linking,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { db } from '../config/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
 export default function AutoNewsScreen() {
+<<<<<<< HEAD
   const { isDark } = useApp();
   const [selectedPdf, setSelectedPdf] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -55,22 +61,35 @@ export default function AutoNewsScreen() {
       topics: ['F1 Championship', 'WEC Finals', 'Rally Review'],
     },
   ]);
+=======
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [newsletters, setNewsletters] = useState([]);
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
 
-  const handleDownload = async (newsletter) => {
+  useEffect(() => {
     try {
-      Alert.alert('Download', `Downloading ${newsletter.title}...`);
-      // TODO: Implement actual PDF download
-      // const downloadResumable = FileSystem.createDownloadResumable(
-      //   newsletter.url,
-      //   FileSystem.documentDirectory + `${newsletter.title}.pdf`
-      // );
-      // const { uri } = await downloadResumable.downloadAsync();
-      // await Sharing.shareAsync(uri);
+      const q = query(
+        collection(db, 'newsletters'),
+        orderBy('date', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setNewsletters(data);
+        setLoading(false);
+      });
+
+      return unsubscribe;
     } catch (error) {
       console.log('Error fetching newsletters:', error);
       setLoading(false);
+<<<<<<< HEAD
     }
   };
 
@@ -79,6 +98,31 @@ export default function AutoNewsScreen() {
       Linking.openURL(url);
     }
   };
+=======
+    }
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  };
+
+  const openDocument = (url) => {
+    if (url) {
+      Linking.openURL(url);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
 
   if (loading) {
     return (
@@ -95,6 +139,10 @@ export default function AutoNewsScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+        }
+        showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.headerSection}>
@@ -103,32 +151,26 @@ export default function AutoNewsScreen() {
           <Text style={styles.description}>Latest automotive news and publications</Text>
         </View>
 
-        {/* Newsstand Grid */}
-        <View style={styles.gridContainer}>
-          {newsletters.map((newsletter) => (
-            <View key={newsletter.id} style={styles.newsletterCard}>
-              {/* Cover Preview */}
-              <View style={styles.coverContainer}>
-                <View style={styles.coverPlaceholder}>
-                  <Text style={styles.coverIcon}>📰</Text>
-                  <Text style={styles.coverTitle}>{newsletter.title}</Text>
-                </View>
-              </View>
-
-              {/* Newsletter Info */}
-              <View style={styles.infoContainer}>
-                <Text style={styles.newsletterTitle} numberOfLines={2}>
-                  {newsletter.title}
-                </Text>
-                <Text style={styles.newsletterSubtitle} numberOfLines={1}>
-                  {newsletter.subtitle}
-                </Text>
-
-                {/* Meta Info */}
-                <View style={styles.metaRow}>
-                  <View style={styles.metaItem}>
-                    <Text style={styles.metaIcon}>📅</Text>
-                    <Text style={styles.metaText}>{newsletter.date}</Text>
+        {/* Newsletter Cards Grid */}
+        <View style={styles.newsContainer}>
+          {newsletters.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>📰</Text>
+              <Text style={styles.emptyText}>No news available</Text>
+              <Text style={styles.emptyDesc}>New articles will appear here soon</Text>
+            </View>
+          ) : (
+            newsletters.map((newsletter) => (
+              <TouchableOpacity
+                key={newsletter.id}
+                style={styles.newsCard}
+                onPress={() => openDocument(newsletter.url)}
+                activeOpacity={0.7}
+              >
+                {/* Card Header */}
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconCircle}>
+                    <Text style={styles.cardIcon}>📄</Text>
                   </View>
                   <View style={styles.cardMeta}>
                     <Text style={styles.pages}>{newsletter.pages || '?'} Pages</Text>
@@ -168,6 +210,7 @@ export default function AutoNewsScreen() {
                         : newsletter.date}
                     </Text>
                   </View>
+<<<<<<< HEAD
                   <TouchableOpacity
                     style={styles.openButton}
                     onPress={() => openDocument(newsletter.url)}
@@ -178,157 +221,184 @@ export default function AutoNewsScreen() {
               </View>
             </View>
           ))}
+=======
+                  <View style={styles.openButton}>
+                    <Text style={styles.openButtonText}>Open →</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+>>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (isDark) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingTop: 50,
-  },
-  headerSection: {
-    marginBottom: 24,
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.primary,
-    marginBottom: 8,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: isDark ? colors.silver : colors.subText,
-  },
-  gridContainer: {
-    gap: 16,
-  },
-  newsletterCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-  },
-  coverContainer: {
-    width: '100%',
-    height: 180,
-    backgroundColor: colors.primary,
-  },
-  coverPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  coverIcon: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  coverTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.lightText,
-    textAlign: 'center',
-  },
-  infoContainer: {
-    padding: 16,
-  },
-  newsletterTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: isDark ? colors.lightText : colors.primary,
-    marginBottom: 4,
-  },
-  newsletterSubtitle: {
-    fontSize: 14,
-    color: isDark ? colors.silver : colors.subText,
-    marginBottom: 12,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 8,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metaIcon: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  metaText: {
-    fontSize: 12,
-    color: isDark ? colors.silver : colors.subText,
-  },
-  topicsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 12,
-    marginBottom: 16,
-  },
-  topicBadge: {
-    backgroundColor: isDark ? colors.primary : colors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  topicText: {
-    fontSize: 10,
-    color: colors.lightText,
-    fontWeight: '600',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  viewButton: {
-    flex: 1,
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.lightText,
-  },
-  downloadButton: {
-    width: 48,
-    backgroundColor: isDark ? colors.primary : colors.primaryLight,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  downloadButtonText: {
-    fontSize: 18,
-  },
-  infoCard: {
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 24,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: isDark ? colors.darkBorder : colors.lightBorder,
-  },
-  infoCardText: {
-    fontSize: 12,
-    color: isDark ? colors.silver : colors.subText,
-    textAlign: 'center',
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.darkBg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 32,
+    },
+    headerSection: {
+      marginBottom: 32,
+    },
+    subtitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.accentLight,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 4,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: 0.5,
+      marginBottom: 8,
+    },
+    description: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    newsContainer: {
+      gap: 16,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 48,
+    },
+    emptyIcon: {
+      fontSize: 64,
+      marginBottom: 16,
+    },
+    emptyText: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    emptyDesc: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    newsCard: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+      gap: 12,
+    },
+    iconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: 'rgba(200, 16, 46, 0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cardIcon: {
+      fontSize: 24,
+    },
+    cardMeta: {
+      flex: 1,
+    },
+    pages: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    size: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 6,
+      marginHorizontal: 0,
+    },
+    cardSubtitle: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginBottom: 12,
+      fontWeight: '500',
+    },
+    topicsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 12,
+    },
+    topicTag: {
+      backgroundColor: 'rgba(10, 35, 66, 0.5)',
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    topicText: {
+      fontSize: 11,
+      color: colors.accentLight,
+      fontWeight: '600',
+    },
+    cardFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    dateContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    dateIcon: {
+      fontSize: 14,
+    },
+    dateText: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontWeight: '500',
+    },
+    openButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+      backgroundColor: 'rgba(200, 16, 46, 0.15)',
+    },
+    openButtonText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.accent,
+      letterSpacing: 0.3,
+    },
+  });
