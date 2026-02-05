@@ -7,11 +7,11 @@
 
 export const cloudinaryConfig = {
   // Your Cloudinary cloud name (required)
-  cloudName: 'YOUR_CLOUD_NAME',
+  cloudName: 'dg1sca6lt',
   
   // Unsigned upload preset (create in Cloudinary Dashboard)
   // Settings > Upload > Add upload preset > Unsigned mode
-  uploadPreset: 'YOUR_UPLOAD_PRESET',
+  uploadPreset: 'autocard-bills',
   
   // API endpoint (don't change)
   uploadUrl: 'https://api.cloudinary.com/v1_1',

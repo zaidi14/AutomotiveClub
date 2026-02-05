@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,62 +9,54 @@ import {
   Dimensions,
   Modal,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { db } from '../config/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
 export default function AutoNewsScreen() {
   const { isDark } = useApp();
   const [selectedPdf, setSelectedPdf] = useState(null);
-  const [newsletters, setNewsletters] = useState([
-    {
-      id: 1,
-      title: 'AutoNews January 2026',
-      subtitle: 'New Year, New Innovations',
-      date: 'January 2026',
-      pages: 12,
-      size: '2.4 MB',
-      url: 'https://example.com/autonews-jan-2026.pdf', // Replace with actual PDF URL
-      topics: ['Electric Vehicles', 'F1 Updates', 'Industry News'],
-    },
-    {
-      id: 2,
-      title: 'AutoNews December 2025',
-      subtitle: 'Year in Review Special',
-      date: 'December 2025',
-      pages: 24,
-      size: '4.1 MB',
-      url: 'https://example.com/autonews-dec-2025.pdf',
-      topics: ['Top 10 Cars', 'Tech Breakthroughs', 'Club Highlights'],
-    },
-    {
-      id: 3,
-      title: 'AutoNews November 2025',
-      subtitle: 'Motorsport Season Finale',
-      date: 'November 2025',
-      pages: 16,
-      size: '3.2 MB',
-      url: 'https://example.com/autonews-nov-2025.pdf',
-      topics: ['F1 Championship', 'WEC Finals', 'Rally Review'],
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [newsletters, setNewsletters] = useState([]);
 
   const styles = createStyles(isDark);
+
+  useEffect(() => {
+    loadNewsletters();
+  }, []);
+
+  const loadNewsletters = async () => {
+    try {
+      setLoading(true);
+      const snapshot = await getDocs(collection(db, 'news'));
+      const newsList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setNewsletters(newsList);
+    } catch (error) {
+      console.error('Error loading newsletters:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadNewsletters().then(() => setRefreshing(false));
+  };
 
   const handleDownload = async (newsletter) => {
     try {
       Alert.alert('Download', `Downloading ${newsletter.title}...`);
       // TODO: Implement actual PDF download
-      // const downloadResumable = FileSystem.createDownloadResumable(
-      //   newsletter.url,
-      //   FileSystem.documentDirectory + `${newsletter.title}.pdf`
-      // );
-      // const { uri } = await downloadResumable.downloadAsync();
-      // await Sharing.shareAsync(uri);
     } catch (error) {
       Alert.alert('Error', 'Failed to download PDF');
     }
@@ -82,6 +74,9 @@ export default function AutoNewsScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Header */}
         <View style={styles.headerSection}>
@@ -89,6 +84,17 @@ export default function AutoNewsScreen() {
           <Text style={styles.subtitleText}>Monthly newsletter & industry reports</Text>
         </View>
 
+        {/* Loading State */}
+        {loading && !refreshing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.accent} />
+          </View>
+        ) : newsletters.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No newsletters yet</Text>
+          </View>
+        ) : (
+          <>
         {/* Newsstand Grid */}
         <View style={styles.gridContainer}>
           {newsletters.map((newsletter) => (
@@ -165,6 +171,8 @@ export default function AutoNewsScreen() {
             📚 New newsletters are published monthly. PDFs can be read offline once downloaded.
           </Text>
         </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -182,6 +190,20 @@ const createStyles = (isDark) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     paddingTop: 50,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: isDark ? colors.lightSubText : colors.subText,
+    fontSize: 16,
   },
   headerSection: {
     marginBottom: 24,

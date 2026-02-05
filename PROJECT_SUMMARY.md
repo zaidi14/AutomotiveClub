@@ -15,6 +15,11 @@ A complete, production-ready React Native mobile app for AGU Automotive Club wit
 - [x] Favorite Restaurant Tracking
 - [x] Dark/Light Theme Toggle
 - [x] Responsive UI with NativeWind
+- [x] Admin Panel with Bill Approval
+- [x] Admin Event Management
+- [x] Admin Newsletter Management
+- [x] Dynamic Events Feed (Firestore-backed)
+- [x] Dynamic News Feed (Firestore-backed)
 
 ### 📁 Project Structure
 

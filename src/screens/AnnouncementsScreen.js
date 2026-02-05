@@ -8,62 +8,46 @@ import {
   StyleSheet,
   Dimensions,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
+import { db } from '../config/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
 export default function AnnouncementsScreen() {
   const { isDark } = useApp();
   const [refreshing, setRefreshing] = useState(false);
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: 'OtoZirve 2026',
-      date: 'February 15, 2026',
-      time: '14:00',
-      location: 'Sümer Campus Conference Hall',
-      description: 'Annual automotive industry summit featuring guest speakers from leading manufacturers.',
-      type: 'Conference',
-    },
-    {
-      id: 2,
-      title: 'AutoDebate: Electric vs Hybrid',
-      date: 'February 22, 2026',
-      time: '18:30',
-      location: 'Engineering Building, Room 301',
-      description: 'Join us for a heated debate on the future of automotive propulsion systems.',
-      type: 'Discussion',
-    },
-    {
-      id: 3,
-      title: 'AutoSinema: Rush (2013)',
-      date: 'March 5, 2026',
-      time: '20:00',
-      location: 'Campus Open Air Cinema',
-      description: 'Movie night featuring the legendary F1 rivalry between Hunt and Lauda.',
-      type: 'Entertainment',
-    },
-    {
-      id: 4,
-      title: 'Track Day Experience',
-      date: 'March 12, 2026',
-      time: '09:00',
-      location: 'İzmir Racing Circuit',
-      description: 'Exclusive track day for club members. Limited spots available.',
-      type: 'Activity',
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState([]);
 
   const styles = createStyles(isDark);
 
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const snapshot = await getDocs(collection(db, 'events'));
+      const eventsList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setEvents(eventsList);
+    } catch (error) {
+      console.error('Error loading events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
+    loadEvents().then(() => setRefreshing(false));
   };
 
   const getTypeColor = (type) => {
@@ -103,6 +87,17 @@ export default function AnnouncementsScreen() {
           <Text style={styles.subtitleText}>Stay updated with club events</Text>
         </View>
 
+        {/* Loading State */}
+        {loading && !refreshing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.accent} />
+          </View>
+        ) : events.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No events yet</Text>
+          </View>
+        ) : (
+          <>
         {/* Events List */}
         <View style={styles.eventsContainer}>
           {events.map((event) => (
@@ -150,13 +145,8 @@ export default function AnnouncementsScreen() {
             </View>
           ))}
         </View>
-
-        {/* Empty State for Future Integration */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardText}>
-            🔗 This section will automatically sync with aguautomotiveclub.com events
-          </Text>
-        </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );

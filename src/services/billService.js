@@ -4,13 +4,14 @@ import { cloudinaryConfig } from '../config/cloudinary';
 
 export const uploadBillImage = async (uri, userId) => {
   try {
-    // Convert file URI to blob
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    
     // Create FormData for Cloudinary upload
     const formData = new FormData();
-    formData.append('file', blob, 'bill.jpg');
+    const fileName = `bill_${Date.now()}.jpg`;
+    formData.append('file', {
+      uri,
+      type: 'image/jpeg',
+      name: fileName,
+    });
     formData.append('upload_preset', cloudinaryConfig.uploadPreset);
     formData.append('folder', 'autocard-bills'); // Organize bills in a folder
     formData.append('tags', `userId_${userId}`); // Tag with user ID for organization
@@ -23,7 +24,8 @@ export const uploadBillImage = async (uri, userId) => {
     });
     
     if (!uploadResponse.ok) {
-      throw new Error('Cloudinary upload failed');
+      const errorText = await uploadResponse.text();
+      throw new Error(`Cloudinary upload failed: ${errorText}`);
     }
     
     const uploadData = await uploadResponse.json();

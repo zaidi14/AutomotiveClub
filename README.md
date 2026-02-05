@@ -10,6 +10,7 @@ A membership and discount tracking mobile application for the Automotive Club at
 - 🏪 Favorite Restaurant Tracking
 - 🌓 Dark/Light Theme Support
 - 💾 Firebase Backend Integration
+- ⚙️ Admin Panel (Bill Approval, Event Management, Newsletter Management)
 
 ## Tech Stack
 
@@ -159,10 +160,10 @@ Then scan the QR code with Expo Go app on your phone.
 
 ## Future Enhancements
 
-- [ ] Admin panel for bill approval
+- [x] Admin panel for bill approval
+- [x] News and announcements feed (admin-managed)
 - [ ] Push notifications for approved bills
 - [ ] QR code scanning
-- [ ] News and announcements feed
 - [ ] Partner restaurant directory
 - [ ] Export transaction history
 

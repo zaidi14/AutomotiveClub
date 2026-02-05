@@ -14,6 +14,7 @@ import BillingScreen from './src/screens/BillingScreen';
 import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
 import AutoNewsScreen from './src/screens/AutoNewsScreen';
 import WebPortalScreen from './src/screens/WebPortalScreen';
+import AdminScreen from './src/screens/AdminScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,7 +34,8 @@ function AuthStack() {
 }
 
 function MainTabs() {
-  const { isDark } = useApp();
+  const { isDark, userData } = useApp();
+  const isAdmin = userData?.role === 'admin';
   
   return (
     <Tab.Navigator
@@ -47,48 +49,55 @@ function MainTabs() {
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTin, isDark } = useApp();
+        tabBarActiveTintColor: isDark ? colors.lightText : colors.accent,
+        tabBarInactiveTintColor: isDark ? colors.lightSubText : colors.subText,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginTop: -4,
+        },
+        tabBarIcon: ({ focused }) => {
+          let icon = '🏠';
 
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? colors.darkBg : colors.lightBg }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
+          if (route.name === 'Announcements') icon = '📣';
+          if (route.name === 'AutoNews') icon = '📰';
+          if (route.name === 'Web Portal') icon = '🌐';
+          if (route.name === 'Admin') icon = '⚙️';
 
-  return (
-    <NavigationContainer>
-      {user ? <MainTabs.name === 'Web Portal') icon = '🌐';
-          
           return (
-            <Text style={{ fontSize: focused ? 24 : 20 }}>
+            <Text style={{ fontSize: focused ? 22 : 18 }}>
               {icon}
             </Text>
           );
         },
       })}
     >
-      <Tab.Screen 
-        name="AutoCard" 
+      <Tab.Screen
+        name="AutoCard"
         component={HomeStackNavigator}
         options={{ tabBarLabel: 'AutoCard' }}
       />
-      <Tab.Screen 
-        name="Announcements" 
+      <Tab.Screen
+        name="Announcements"
         component={AnnouncementsScreen}
         options={{ tabBarLabel: 'Events' }}
       />
-      <Tab.Screen 
-        name="AutoNews" 
+      <Tab.Screen
+        name="AutoNews"
         component={AutoNewsScreen}
         options={{ tabBarLabel: 'News' }}
       />
-      <Tab.Screen 
-        name="Web Portal" 
+      <Tab.Screen
+        name="Web Portal"
         component={WebPortalScreen}
         options={{ tabBarLabel: 'Portal' }}
       />
+      {isAdmin && (
+        <Tab.Screen
+          name="Admin"
+          component={AdminScreen}
+          options={{ tabBarLabel: 'Admin' }}
+        />
+      )}
     </Tab.Navigator>
   );
 }
@@ -120,7 +129,7 @@ function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {user ? <MainStack /> : <AuthStack />}
+      {user ? <MainTabs /> : <AuthStack />}
     </NavigationContainer>
   );
 }
