@@ -48,43 +48,25 @@ export default function HomeScreen({ navigation }) {
       id: 1,
       label: 'Total Orders',
       value: userData.totalOrders || 0,
-<<<<<<< HEAD
       displayValue: userData.totalOrders || 0,
       icon: '⊙',
       subtitle: 'TRIPS',
-=======
-      icon: '📦',
-      color: '#3282b8',
-      bgColor: 'rgba(50, 130, 184, 0.1)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     {
       id: 2,
       label: 'Amount Spent',
       value: `₺${(userData.lifetimeSpend || 0).toFixed(0)}`,
-<<<<<<< HEAD
       displayValue: `₺${(userData.lifetimeSpend || 0).toFixed(0)}`,
       icon: '⛽',
       subtitle: 'FUEL',
-=======
-      icon: '💰',
-      color: '#10B981',
-      bgColor: 'rgba(16, 185, 129, 0.1)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     {
       id: 3,
       label: 'Total Savings',
       value: `₺${(userData.lifetimeSavings || 0).toFixed(0)}`,
-<<<<<<< HEAD
       displayValue: `₺${(userData.lifetimeSavings || 0).toFixed(0)}`,
       icon: '◉',
       subtitle: 'SAVED',
-=======
-      icon: '💎',
-      color: '#F59E0B',
-      bgColor: 'rgba(245, 158, 11, 0.1)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
   ];
 
@@ -104,11 +86,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.userName}>{userData.name || 'Member'}</Text>
           </View>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-<<<<<<< HEAD
             <Text style={styles.logoutIcon}>⏻</Text>
-=======
-            <Text style={styles.logoutIcon}>🚪</Text>
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
           </TouchableOpacity>
         </View>
 
@@ -131,7 +109,6 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-<<<<<<< HEAD
         {/* Stats Section - Dashboard Gauges */}
         <View style={styles.statsSection}>
           <Text style={styles.sectionTitle}>⚡ DASHBOARD</Text>
@@ -146,59 +123,24 @@ export default function HomeScreen({ navigation }) {
                   </View>
                 </View>
                 <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
-=======
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Your Statistics</Text>
-          <View style={styles.statsGrid}>
-            {stats.map((stat) => (
-              <View key={stat.id} style={styles.statCard}>
-                <View
-                  style={[
-                    styles.statIconContainer,
-                    { backgroundColor: stat.bgColor },
-                  ]}
-                >
-                  <Text style={styles.statIcon}>{stat.icon}</Text>
-                </View>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
               </View>
             ))}
           </View>
         </View>
 
-<<<<<<< HEAD
         {/* Quick Actions - Racing Theme */}
         <View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>🏁 QUICK ACCESS</Text>
-=======
-        {/* Quick Actions */}
-        <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => navigation.navigate('Billing')}
           >
-<<<<<<< HEAD
             <View style={styles.racingStripe} />
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>UPLOAD BILL</Text>
               <Text style={styles.actionDesc}>Track your automotive purchases</Text>
             </View>
             <Text style={styles.actionArrow}>▶</Text>
-=======
-            <View style={styles.actionIconContainer}>
-              <Text style={styles.actionIcon}>📄</Text>
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Upload Bill</Text>
-              <Text style={styles.actionDesc}>Track your purchases</Text>
-            </View>
-            <Text style={styles.actionArrow}>→</Text>
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
           </TouchableOpacity>
         </View>
 
@@ -263,7 +205,6 @@ const createStyles = () =>
       width: 48,
       height: 48,
       borderRadius: 12,
-<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
       justifyContent: 'center',
       alignItems: 'center',
@@ -273,27 +214,14 @@ const createStyles = () =>
     logoutIcon: {
       fontSize: 24,
       color: colors.lightText,
-=======
-      backgroundColor: 'rgba(200, 16, 46, 0.2)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: 'rgba(200, 16, 46, 0.3)',
-    },
-    logoutIcon: {
-      fontSize: 20,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     memberCard: {
       backgroundColor: colors.darkCardBg,
       borderRadius: 16,
       padding: 20,
       marginBottom: 32,
-<<<<<<< HEAD
       borderWidth: 2,
       borderColor: colors.accent,
-=======
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       borderLeftWidth: 4,
       borderLeftColor: colors.accent,
     },
@@ -311,11 +239,7 @@ const createStyles = () =>
     memberCardBadge: {
       fontSize: 12,
       color: '#10B981',
-<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
-=======
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
@@ -349,14 +273,9 @@ const createStyles = () =>
     sectionTitle: {
       fontSize: 18,
       fontWeight: '700',
-<<<<<<< HEAD
       color: colors.lightText,
       marginBottom: 16,
       letterSpacing: 1.5,
-=======
-      color: colors.text,
-      marginBottom: 16,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     statsGrid: {
       gap: 12,
@@ -366,7 +285,6 @@ const createStyles = () =>
       borderRadius: 16,
       padding: 20,
       alignItems: 'center',
-<<<<<<< HEAD
       borderWidth: 2,
       borderColor: colors.accent,
       flex: 1,
@@ -404,21 +322,6 @@ const createStyles = () =>
       color: colors.accent,
       fontWeight: '700',
       letterSpacing: 1,
-=======
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    statIconContainer: {
-      width: 56,
-      height: 56,
-      borderRadius: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    statIcon: {
-      fontSize: 28,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     statValue: {
       fontSize: 24,
@@ -439,7 +342,6 @@ const createStyles = () =>
     actionCard: {
       backgroundColor: colors.darkCardBg,
       borderRadius: 16,
-<<<<<<< HEAD
       padding: 20,
       flexDirection: 'row',
       alignItems: 'center',
@@ -455,53 +357,30 @@ const createStyles = () =>
       bottom: 0,
       width: 6,
       backgroundColor: colors.accent,
-=======
-      padding: 16,
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.accent,
-      borderLeftWidth: 4,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     actionIconContainer: {
       width: 56,
       height: 56,
       borderRadius: 12,
-<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
-=======
-      backgroundColor: 'rgba(15, 76, 117, 0.2)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 16,
     },
     actionIcon: {
       fontSize: 28,
-<<<<<<< HEAD
       color: colors.accent,
     },
     actionContent: {
       flex: 1,
       paddingLeft: 12,
-=======
-    },
-    actionContent: {
-      flex: 1,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     actionTitle: {
       fontSize: 16,
       fontWeight: '700',
-<<<<<<< HEAD
       color: colors.lightText,
       marginBottom: 4,
       letterSpacing: 1,
-=======
-      color: colors.text,
-      marginBottom: 4,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     actionDesc: {
       fontSize: 12,

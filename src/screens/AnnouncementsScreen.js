@@ -13,11 +13,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
 import { db } from '../config/firebase';
-<<<<<<< HEAD
 import { collection, getDocs } from 'firebase/firestore';
-=======
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
 
 const { width } = Dimensions.get('window');
 
@@ -73,13 +69,7 @@ export default function AnnouncementsScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-<<<<<<< HEAD
     loadEvents().then(() => setRefreshing(false));
-=======
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
   };
 
   const getTypeColor = (type) => {
@@ -125,86 +115,26 @@ export default function AnnouncementsScreen() {
             <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : events.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No events yet</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>📭</Text>
+            <Text style={styles.emptyText}>No announcements yet</Text>
+            <Text style={styles.emptyDesc}>Check back soon for upcoming events</Text>
           </View>
         ) : (
-          <>
-        {/* Events List */}
-        <View style={styles.eventsContainer}>
-          {events.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={styles.emptyText}>No announcements yet</Text>
-              <Text style={styles.emptyDesc}>Check back soon for upcoming events</Text>
-            </View>
-<<<<<<< HEAD
-          ))}
-        </View>
-          </>
-        )}
-=======
-          ) : (
-            events.map((event, index) => {
-              const typeColor = getTypeColor(event.type);
-              return (
-                <View key={event.id} style={styles.eventCard}>
-                  {/* Left Timeline Dot */}
-                  <View style={styles.timelineContainer}>
-                    <View style={styles.timelineDot} />
-                    {index < events.length - 1 && <View style={styles.timelineLine} />}
-                  </View>
-
-                  {/* Event Content */}
-                  <View style={styles.eventContent}>
-                    {/* Type Badge */}
-                    <View
-                      style={[styles.typeBadge, { backgroundColor: typeColor.bg }]}
-                    >
-                      <Text style={[styles.typeText, { color: typeColor.color }]}>
-                        {event.type}
-                      </Text>
-                    </View>
-
-                    {/* Title */}
-                    <Text style={styles.eventTitle}>{event.title}</Text>
-
-                    {/* Event Details */}
-                    <View style={styles.detailsContainer}>
-                      <View style={styles.detail}>
-                        <Text style={styles.detailIcon}>📅</Text>
-                        <Text style={styles.detailText}>
-                          {event.date?.toDate
-                            ? event.date.toDate().toLocaleDateString()
-                            : event.date}
-                        </Text>
-                      </View>
-                      <View style={styles.detail}>
-                        <Text style={styles.detailIcon}>🕐</Text>
-                        <Text style={styles.detailText}>{event.time}</Text>
-                      </View>
-                    </View>
-
-                    {/* Location */}
-                    <View style={styles.detail}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText}>{event.location}</Text>
-                    </View>
-
-                    {/* Description */}
-                    <Text style={styles.description}>{event.description}</Text>
-
-                    {/* Action Button */}
-                    <TouchableOpacity style={styles.reminderBtn}>
-                      <Text style={styles.reminderBtnText}>Set Reminder</Text>
-                    </TouchableOpacity>
-                  </View>
+          <View style={styles.eventsContainer}>
+            {events.map((event) => (
+              <TouchableOpacity key={event.id} style={styles.eventCard}>
+                <View style={styles.eventHeader}>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={styles.eventDate}>{event.date}</Text>
                 </View>
-              );
-            })
-          )}
-        </View>
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
+                {event.description && (
+                  <Text style={styles.eventDesc}>{event.description}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );

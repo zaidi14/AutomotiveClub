@@ -271,11 +271,7 @@ const createStyles = () =>
       width: 80,
       height: 80,
       borderRadius: 40,
-<<<<<<< HEAD
       backgroundColor: colors.primaryDark,
-=======
-      backgroundColor: 'rgba(200, 16, 46, 0.15)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       borderWidth: 2,
       borderColor: colors.accent,
       justifyContent: 'center',
@@ -386,11 +382,7 @@ const createStyles = () =>
       elevation: 5,
     },
     registerButtonDisabled: {
-<<<<<<< HEAD
       backgroundColor: colors.slateGrey,
-=======
-      opacity: 0.7,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     },
     registerButtonIcon: {
       fontSize: 18,

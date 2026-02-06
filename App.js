@@ -14,14 +14,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import BillingScreen from './src/screens/BillingScreen';
 import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
 import AutoNewsScreen from './src/screens/AutoNewsScreen';
-<<<<<<< HEAD
 import WebPortalScreen from './src/screens/WebPortalScreen';
 import AdminScreen from './src/screens/AdminScreen';
-=======
-import AdminPanelScreen from './src/screens/AdminPanelScreen';
-import AdminAnnouncementsScreen from './src/screens/AdminAnnouncementsScreen';
-import AdminNewslettersScreen from './src/screens/AdminNewslettersScreen';
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -40,56 +34,6 @@ function AuthStack() {
   );
 }
 
-<<<<<<< HEAD
-=======
-function MainTabs() {
-  const { isDark } = useApp();
-  
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
-          borderTopColor: isDark ? colors.darkBorder : colors.lightBorder,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarIcon: ({ focused }) => {
-          let icon = '🏠';
-          if (route.name === 'Announcements') icon = '📢';
-          if (route.name === 'AutoNews') icon = '📰';
-          
-          return (
-            <Text style={{ fontSize: focused ? 24 : 20 }}>
-              {icon}
-            </Text>
-          );
-        },
-      })}
-    >
-      <Tab.Screen 
-        name="AutoCard" 
-        component={HomeStackNavigator}
-        options={{ tabBarLabel: 'Home' }}
-      />
-      <Tab.Screen 
-        name="Announcements" 
-        component={AnnouncementsScreen}
-        options={{ tabBarLabel: 'Announcements' }}
-      />
-      <Tab.Screen 
-        name="AutoNews" 
-        component={AutoNewsScreen}
-        options={{ tabBarLabel: 'News' }}
-      />
-    </Tab.Navigator>
-  );
-}
-
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
 function HomeStackNavigator() {
   return (
     <Stack.Navigator
@@ -170,8 +114,8 @@ function MainTabs() {
 }
 
 function AppNavigator() {
-<<<<<<< HEAD
-  const { user, loading, isDark } = useApp();
+  const { user, loading, isDark, userData } = useApp();
+  const isAdmin = userData?.role === 'admin';
 
   if (loading) {
     return (
@@ -182,14 +126,6 @@ function AppNavigator() {
           resizeMode="contain"
         />
         <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 20 }} />
-=======
-  const { user, loading, isAdmin } = useApp();
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.accent} />
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       </View>
     );
   }
@@ -202,32 +138,10 @@ function AppNavigator() {
     );
   }
 
-  // Admin Stack
-  if (isAdmin) {
-    return (
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
-          <Stack.Screen name="AdminAnnouncements" component={AdminAnnouncementsScreen} />
-          <Stack.Screen name="AdminNewsletters" component={AdminNewslettersScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
-  }
-
-  // Regular User Stack
+  // Regular User Stack (admin tabs are included in MainTabs)
   return (
     <NavigationContainer>
-<<<<<<< HEAD
       {user ? <MainTabs /> : <AuthStack />}
-=======
-      <MainTabs />
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
     </NavigationContainer>
   );
 }

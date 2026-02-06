@@ -8,14 +8,10 @@ import {
   ActivityIndicator,
   StyleSheet,
   Dimensions,
-<<<<<<< HEAD
   Modal,
   Alert,
-=======
-  RefreshControl,
-  ActivityIndicator,
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
   Linking,
+  RefreshControl,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
@@ -25,10 +21,10 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 const { width } = Dimensions.get('window');
 
 export default function AutoNewsScreen() {
-<<<<<<< HEAD
   const { isDark } = useApp();
   const [selectedPdf, setSelectedPdf] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [newsletters, setNewsletters] = useState([
     {
       id: 1,
@@ -61,11 +57,6 @@ export default function AutoNewsScreen() {
       topics: ['F1 Championship', 'WEC Finals', 'Rally Review'],
     },
   ]);
-=======
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [newsletters, setNewsletters] = useState([]);
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
 
   const styles = createStyles();
 
@@ -89,40 +80,20 @@ export default function AutoNewsScreen() {
     } catch (error) {
       console.log('Error fetching newsletters:', error);
       setLoading(false);
-<<<<<<< HEAD
-    }
-  };
-
-  const openDocument = (url) => {
-    if (url) {
-      Linking.openURL(url);
-    }
-  };
-=======
     }
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
-  };
-
   const openDocument = (url) => {
     if (url) {
       Linking.openURL(url);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
+  const onRefresh = () => {
+    setRefreshing(true);
+    // The useEffect will handle the data refresh
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
   if (loading) {
     return (
@@ -210,7 +181,6 @@ export default function AutoNewsScreen() {
                         : newsletter.date}
                     </Text>
                   </View>
-<<<<<<< HEAD
                   <TouchableOpacity
                     style={styles.openButton}
                     onPress={() => openDocument(newsletter.url)}
@@ -218,24 +188,14 @@ export default function AutoNewsScreen() {
                     <Text style={styles.openButtonText}>Open →</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </View>
-          ))}
-=======
-                  <View style={styles.openButton}>
-                    <Text style={styles.openButtonText}>Open →</Text>
-                  </View>
-                </View>
               </TouchableOpacity>
             ))
           )}
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
         </View>
       </ScrollView>
     </View>
   );
 }
-
 const createStyles = () =>
   StyleSheet.create({
     container: {
