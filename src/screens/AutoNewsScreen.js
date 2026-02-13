@@ -7,67 +7,30 @@ import {
   StatusBar,
   ActivityIndicator,
   StyleSheet,
-  Dimensions,
-  Modal,
-  Alert,
   Linking,
+  TextInput,
   RefreshControl,
 } from 'react-native';
-import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-
-const { width } = Dimensions.get('window');
+import { collection, onSnapshot } from 'firebase/firestore';
 
 export default function AutoNewsScreen() {
-  const { isDark } = useApp();
-  const [selectedPdf, setSelectedPdf] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [newsletters, setNewsletters] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [newsletters, setNewsletters] = useState([
-    {
-      id: 1,
-      title: 'AutoNews January 2026',
-      subtitle: 'New Year, New Innovations',
-      date: 'January 2026',
-      pages: 12,
-      size: '2.4 MB',
-      url: 'https://example.com/autonews-jan-2026.pdf', // Replace with actual PDF URL
-      topics: ['Electric Vehicles', 'F1 Updates', 'Industry News'],
-    },
-    {
-      id: 2,
-      title: 'AutoNews December 2025',
-      subtitle: 'Year in Review Special',
-      date: 'December 2025',
-      pages: 24,
-      size: '4.1 MB',
-      url: 'https://example.com/autonews-dec-2025.pdf',
-      topics: ['Top 10 Cars', 'Tech Breakthroughs', 'Club Highlights'],
-    },
-    {
-      id: 3,
-      title: 'AutoNews November 2025',
-      subtitle: 'Motorsport Season Finale',
-      date: 'November 2025',
-      pages: 16,
-      size: '3.2 MB',
-      url: 'https://example.com/autonews-nov-2025.pdf',
-      topics: ['F1 Championship', 'WEC Finals', 'Rally Review'],
-    },
-  ]);
 
   const styles = createStyles();
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   useEffect(() => {
     try {
-      const q = query(
-        collection(db, 'newsletters'),
-        orderBy('date', 'desc')
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      const unsubscribe = onSnapshot(collection(db, 'news'), (snapshot) => {
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -78,7 +41,7 @@ export default function AutoNewsScreen() {
 
       return unsubscribe;
     } catch (error) {
-      console.log('Error fetching newsletters:', error);
+      console.log('Error fetching news:', error);
       setLoading(false);
     }
   }, []);
@@ -87,12 +50,6 @@ export default function AutoNewsScreen() {
     if (url) {
       Linking.openURL(url);
     }
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    // The useEffect will handle the data refresh
-    setTimeout(() => setRefreshing(false), 1000);
   };
 
   if (loading) {
@@ -110,10 +67,8 @@ export default function AutoNewsScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
-        }
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
         {/* Header */}
         <View style={styles.headerSection}>
@@ -131,7 +86,15 @@ export default function AutoNewsScreen() {
               <Text style={styles.emptyDesc}>New articles will appear here soon</Text>
             </View>
           ) : (
-            newsletters.map((newsletter) => (
+            <>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search news..."
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {newsletters.filter(n => n.title?.toLowerCase().includes(searchQuery.toLowerCase())).map((newsletter) => (
               <TouchableOpacity
                 key={newsletter.id}
                 style={styles.newsCard}
@@ -189,7 +152,8 @@ export default function AutoNewsScreen() {
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
-            ))
+            ))}
+            </>
           )}
         </View>
       </ScrollView>
@@ -207,7 +171,7 @@ const createStyles = () =>
     },
     scrollContent: {
       paddingHorizontal: 24,
-      paddingTop: 24,
+      paddingTop: 60,
       paddingBottom: 40,
     },
     headerSection: {
@@ -235,6 +199,17 @@ const createStyles = () =>
     },
     newsContainer: {
       gap: 20,
+    },
+    searchInput: {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderRadius: 16,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+      fontSize: 15,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 16,
     },
     emptyState: {
       alignItems: 'center',

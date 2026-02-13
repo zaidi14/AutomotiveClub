@@ -1,11 +1,13 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AppProvider, useApp } from './src/context/AppContext';
-import { ActivityIndicator, View, StyleSheet, Text, Image } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from './src/styles/colors';
-import LogoHeader from './src/components/LogoHeader';
+import * as Notifications from 'expo-notifications';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -17,9 +19,11 @@ import AutoNewsScreen from './src/screens/AutoNewsScreen';
 import WebPortalScreen from './src/screens/WebPortalScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import AdminBillsScreen from './src/screens/AdminBillsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const navigationRef = createNavigationContainerRef();
 
 function AuthStack() {
   return (
@@ -45,6 +49,7 @@ function HomeStackNavigator() {
     >
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="Billing" component={BillingScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
     </Stack.Navigator>
   );
 }
@@ -71,14 +76,12 @@ function MainTabs() {
           fontSize: 12,
           marginTop: -4,
         },
-        tabBarIcon: ({ focused }) => {
-          let icon = '🏠';
-
-          if (route.name === 'Announcements') icon = '📣';
-          if (route.name === 'AutoNews') icon = '📰';
-          if (route.name === 'Web Portal') icon = '🌐';
-
-          return <Text style={{ fontSize: focused ? 22 : 18 }}>{icon}</Text>;
+        tabBarIcon: ({ focused, color }) => {
+          let iconName = 'home';
+          if (route.name === 'Announcements') iconName = 'megaphone';
+          if (route.name === 'AutoNews') iconName = 'newspaper';
+          if (route.name === 'Web Portal') iconName = 'globe';
+          return <Ionicons name={focused ? iconName : `${iconName}-outline`} size={22} color={color} />;
         },
       })}
     >
@@ -106,9 +109,35 @@ function MainTabs() {
   );
 }
 
+function AdminStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="AdminHome" component={AdminScreen} />
+      <Stack.Screen name="AdminBills" component={AdminBillsScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function AppNavigator() {
-  const { user, loading, isDark, userData } = useApp();
+  const { user, loading, userData, isOnline } = useApp();
   const isAdmin = userData?.role === 'admin';
+
+  // Deep link: navigate when user taps a push notification
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (navigationRef.isReady() && user && !isAdmin) {
+        if (data?.screen === 'Events') navigationRef.navigate('Announcements');
+        else if (data?.screen === 'News') navigationRef.navigate('AutoNews');
+      }
+    });
+    return () => sub.remove();
+  }, [user, isAdmin]);
 
   if (loading) {
     return (
@@ -123,36 +152,18 @@ function AppNavigator() {
     );
   }
 
-  if (!user) {
-    return (
-      <NavigationContainer>
-        <AuthStack />
-      </NavigationContainer>
-    );
-  }
-
-  // Admin users get admin-only interface without navigation
-  if (isAdmin) {
-    return (
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="AdminHome" component={AdminScreen} />
-          <Stack.Screen name="AdminBills" component={AdminBillsScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
-  }
-
-  // Regular user navigation
   return (
-    <NavigationContainer>
-      <MainTabs />
-    </NavigationContainer>
+    <View style={{ flex: 1 }}>
+      {!isOnline && (
+        <View style={styles.offlineBanner}>
+          <Ionicons name="cloud-offline-outline" size={14} color="#fff" />
+          <Text style={styles.offlineText}>No internet connection</Text>
+        </View>
+      )}
+      <NavigationContainer ref={navigationRef}>
+        {!user ? <AuthStack /> : isAdmin ? <AdminStack /> : <MainTabs />}
+      </NavigationContainer>
+    </View>
   );
 }
 
@@ -166,12 +177,28 @@ const styles = StyleSheet.create({
     width: '60%',
     height: 200,
   },
+  offlineBanner: {
+    backgroundColor: '#F44336',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingTop: 50,
+    gap: 8,
+  },
+  offlineText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppNavigator />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppNavigator />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

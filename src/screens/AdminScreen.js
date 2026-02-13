@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,13 +13,19 @@ import {
   Modal,
 } from 'react-native';
 import { useApp } from '../context/AppContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { db, auth } from '../config/firebase';
-import { collection, query, where, getDocs, updateDoc, doc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, getDoc, addDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
+import { Ionicons } from '@expo/vector-icons';
+import { sendPushToAllUsers } from '../services/notificationService';
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const EVENT_TYPES = ['Conference', 'Discussion', 'Entertainment', 'Activity'];
 
 export default function AdminScreen({ navigation }) {
-  const { isDark, user, userData } = useApp();
+  const { user, userData } = useApp();
   const [bills, setBills] = useState([]);
   const [events, setEvents] = useState([]);
   const [news, setNews] = useState([]);
@@ -36,14 +42,20 @@ export default function AdminScreen({ navigation }) {
     subtitle: '',
     url: '',
   });
+  const [editingId, setEditingId] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerMonth, setPickerMonth] = useState(new Date().getMonth());
+  const [pickerDay, setPickerDay] = useState(new Date().getDate());
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingBills: 0,
     approvedBills: 0,
+    rejectedBills: 0,
     totalRevenue: 0,
   });
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
 
   // Check if user is admin
   useEffect(() => {
@@ -53,10 +65,12 @@ export default function AdminScreen({ navigation }) {
     }
   }, [userData]);
 
-  // Load initial data
-  useEffect(() => {
-    loadAllData();
-  }, []);
+  // Refresh data when screen comes into focus (e.g. after approving bills)
+  useFocusEffect(
+    useCallback(() => {
+      loadAllData();
+    }, [])
+  );
 
   const loadAllData = async () => {
     setLoading(true);
@@ -101,12 +115,14 @@ export default function AdminScreen({ navigation }) {
 
       let pendingCount = 0;
       let approvedCount = 0;
+      let rejectedCount = 0;
       let totalRevenue = 0;
 
       expensesSnapshot.forEach(expenseDoc => {
         const data = expenseDoc.data();
         const status = data.status || 'pending';
         if (status === 'pending') pendingCount++;
+        if (status === 'rejected') rejectedCount++;
         if (status === 'approved') {
           approvedCount++;
           totalRevenue += data.amount || 0;
@@ -117,6 +133,7 @@ export default function AdminScreen({ navigation }) {
         totalUsers: usersSnapshot.size,
         pendingBills: pendingCount,
         approvedBills: approvedCount,
+        rejectedBills: rejectedCount,
         totalRevenue: totalRevenue,
       });
     } catch (error) {
@@ -163,12 +180,21 @@ export default function AdminScreen({ navigation }) {
         time: formData.time,
         location: formData.location,
         type: formData.type,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
       });
       Alert.alert('Success', 'Event created');
       setModalVisible(false);
+      setEditingId(null);
       setFormData({ title: '', description: '', date: '', time: '', location: '', type: 'Conference', subtitle: '', url: '' });
       loadEvents();
+
+      // Send push notification to all users
+      sendPushToAllUsers(
+        'New Event',
+        `${formData.title} — ${formData.date}`,
+        user?.uid,
+        { screen: 'Events' }
+      );
     } catch (error) {
       Alert.alert('Error', 'Failed to create event');
       console.error(error);
@@ -186,12 +212,21 @@ export default function AdminScreen({ navigation }) {
         subtitle: formData.subtitle,
         date: formData.date,
         url: formData.url,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
       });
       Alert.alert('Success', 'Newsletter created');
       setModalVisible(false);
+      setEditingId(null);
       setFormData({ title: '', description: '', date: '', time: '', location: '', type: 'Conference', subtitle: '', url: '' });
       loadNews();
+
+      // Send push notification to all users
+      sendPushToAllUsers(
+        'New Article',
+        formData.title,
+        user?.uid,
+        { screen: 'News' }
+      );
     } catch (error) {
       Alert.alert('Error', 'Failed to create newsletter');
       console.error(error);
@@ -268,6 +303,154 @@ export default function AdminScreen({ navigation }) {
     );
   };
 
+  const editEvent = (event) => {
+    setEditingId(event.id);
+    setModalType('event');
+    setFormData({
+      title: event.title || '',
+      description: event.description || '',
+      date: event.date || '',
+      time: event.time || '',
+      location: event.location || '',
+      type: event.type || 'Conference',
+      subtitle: '',
+      url: '',
+    });
+    setModalVisible(true);
+  };
+
+  const editNews = (item) => {
+    setEditingId(item.id);
+    setModalType('news');
+    setFormData({
+      title: item.title || '',
+      subtitle: item.subtitle || '',
+      date: item.date || '',
+      url: item.url || '',
+      description: '',
+      time: '',
+      location: '',
+      type: 'Conference',
+    });
+    setModalVisible(true);
+  };
+
+  const confirmDate = () => {
+    const dateStr = `${MONTHS[pickerMonth]} ${pickerDay}, ${pickerYear}`;
+    setFormData(prev => ({ ...prev, date: dateStr }));
+    setShowDatePicker(false);
+  };
+
+  const updateEvent = async () => {
+    try {
+      if (!formData.title || !formData.description || !formData.date) {
+        Alert.alert('Error', 'Please fill in all required fields');
+        return;
+      }
+      await updateDoc(doc(db, 'events', editingId), {
+        title: formData.title,
+        description: formData.description,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        type: formData.type,
+      });
+      Alert.alert('Success', 'Event updated');
+      setModalVisible(false);
+      setEditingId(null);
+      setFormData({ title: '', description: '', date: '', time: '', location: '', type: 'Conference', subtitle: '', url: '' });
+      loadEvents();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update event');
+      console.error(error);
+    }
+  };
+
+  const updateNews = async () => {
+    try {
+      if (!formData.title || !formData.subtitle || !formData.date) {
+        Alert.alert('Error', 'Please fill in all required fields');
+        return;
+      }
+      await updateDoc(doc(db, 'news', editingId), {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        date: formData.date,
+        url: formData.url,
+      });
+      Alert.alert('Success', 'Newsletter updated');
+      setModalVisible(false);
+      setEditingId(null);
+      setFormData({ title: '', description: '', date: '', time: '', location: '', type: 'Conference', subtitle: '', url: '' });
+      loadNews();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update newsletter');
+      console.error(error);
+    }
+  };
+
+  const recalculateAllUserStats = async () => {
+    Alert.alert(
+      'Recalculate Stats',
+      'This will recalculate all user stats from approved bills. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Recalculate',
+          onPress: async () => {
+            try {
+              // Get all approved expenses
+              const expSnap = await getDocs(collection(db, 'restaurant_expenses'));
+              // Group by userId
+              const userStats = {};
+              expSnap.forEach((d) => {
+                const data = d.data();
+                const status = data.status || 'pending';
+                if (status !== 'approved') return;
+                const uid = data.userId;
+                if (!uid) return;
+                if (!userStats[uid]) {
+                  userStats[uid] = { spend: 0, orders: 0, restaurants: {} };
+                }
+                userStats[uid].spend += data.amount || 0;
+                userStats[uid].orders += 1;
+                const r = data.restaurant;
+                if (r) userStats[uid].restaurants[r] = (userStats[uid].restaurants[r] || 0) + 1;
+              });
+
+              // Get all users and update
+              const usersSnap = await getDocs(collection(db, 'users'));
+              const batch = writeBatch(db);
+              let updated = 0;
+              for (const userDoc of usersSnap.docs) {
+                const uid = userDoc.id;
+                const s = userStats[uid] || { spend: 0, orders: 0, restaurants: {} };
+                const discountRate = 0.1;
+                const favKeys = Object.keys(s.restaurants);
+                const favorite = favKeys.length > 0
+                  ? favKeys.reduce((a, b) => s.restaurants[a] > s.restaurants[b] ? a : b, '')
+                  : '';
+                batch.update(doc(db, 'users', uid), {
+                  lifetimeSpend: s.spend,
+                  lifetimeSavings: s.spend * discountRate,
+                  totalOrders: s.orders,
+                  favoriteRestaurant: favorite,
+                });
+                updated++;
+              }
+              await batch.commit();
+              Alert.alert('Done', `Recalculated stats for ${updated} users.`);
+              loadAllData();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to recalculate: ' + error.message);
+              console.error(error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading && bills.length === 0 && events.length === 0 && news.length === 0) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -308,10 +491,20 @@ export default function AdminScreen({ navigation }) {
               <Text style={styles.statLabel}>Approved</Text>
             </View>
             <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.rejectedBills}</Text>
+              <Text style={styles.statLabel}>Rejected</Text>
+            </View>
+            <View style={styles.statCard}>
               <Text style={styles.statValue}>₺{stats.totalRevenue.toFixed(2)}</Text>
               <Text style={styles.statLabel}>Revenue</Text>
             </View>
           </View>
+          <TouchableOpacity
+            style={styles.recalcButton}
+            onPress={recalculateAllUserStats}
+          >
+            <Text style={styles.recalcButtonText}>🔄 Recalculate All User Stats</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Bill Management Section */}
@@ -364,6 +557,7 @@ export default function AdminScreen({ navigation }) {
               style={styles.addButton}
               onPress={() => {
                 setModalType('event');
+                setEditingId(null);
                 setFormData({ title: '', description: '', date: '', time: '', location: '', type: 'Conference', subtitle: '', url: '' });
                 setModalVisible(true);
               }}
@@ -378,8 +572,11 @@ export default function AdminScreen({ navigation }) {
                   <Text style={styles.itemTitle}>{event.title}</Text>
                   <Text style={styles.itemSubtext}>{event.date}</Text>
                 </View>
+                <TouchableOpacity onPress={() => editEvent(event)} style={{ marginRight: 8 }}>
+                  <Ionicons name="create-outline" size={18} color={colors.accent} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => deleteEvent(event.id)}>
-                  <Text style={styles.deleteIcon}>🗑️</Text>
+                  <Ionicons name="trash-outline" size={18} color="#F44336" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -399,6 +596,7 @@ export default function AdminScreen({ navigation }) {
               style={styles.addButton}
               onPress={() => {
                 setModalType('news');
+                setEditingId(null);
                 setFormData({ title: '', description: '', date: '', time: '', location: '', type: 'Conference', subtitle: '', url: '' });
                 setModalVisible(true);
               }}
@@ -413,8 +611,11 @@ export default function AdminScreen({ navigation }) {
                   <Text style={styles.itemTitle}>{item.title}</Text>
                   <Text style={styles.itemSubtext}>{item.subtitle}</Text>
                 </View>
+                <TouchableOpacity onPress={() => editNews(item)} style={{ marginRight: 8 }}>
+                  <Ionicons name="create-outline" size={18} color={colors.accent} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => deleteNews(item.id)}>
-                  <Text style={styles.deleteIcon}>🗑️</Text>
+                  <Ionicons name="trash-outline" size={18} color="#F44336" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -445,10 +646,13 @@ export default function AdminScreen({ navigation }) {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {modalType === 'event' ? 'Create Event' : 'Create Newsletter'}
+                {editingId
+                  ? (modalType === 'event' ? 'Edit Event' : 'Edit Newsletter')
+                  : (modalType === 'event' ? 'Create Event' : 'Create Newsletter')
+                }
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.closeBtn}>✕</Text>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -476,13 +680,14 @@ export default function AdminScreen({ navigation }) {
                   />
 
                   <Text style={styles.inputLabel}>Date *</Text>
-                  <TextInput
+                  <TouchableOpacity
                     style={styles.input}
-                    placeholder="e.g., March 15, 2024"
-                    placeholderTextColor={colors.textMuted}
-                    value={formData.date}
-                    onChangeText={(text) => setFormData({ ...formData, date: text })}
-                  />
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Text style={{ color: formData.date ? colors.text : colors.textMuted, fontSize: 15 }}>
+                      {formData.date || 'Select a date'}
+                    </Text>
+                  </TouchableOpacity>
 
                   <Text style={styles.inputLabel}>Time</Text>
                   <TextInput
@@ -501,6 +706,21 @@ export default function AdminScreen({ navigation }) {
                     value={formData.location}
                     onChangeText={(text) => setFormData({ ...formData, location: text })}
                   />
+
+                  <Text style={styles.inputLabel}>Event Type</Text>
+                  <View style={styles.typeRow}>
+                    {EVENT_TYPES.map(type => (
+                      <TouchableOpacity
+                        key={type}
+                        style={[styles.typeChip, formData.type === type && styles.typeChipSelected]}
+                        onPress={() => setFormData({ ...formData, type })}
+                      >
+                        <Text style={[styles.typeChipText, formData.type === type && styles.typeChipTextSelected]}>
+                          {type}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </>
               )}
 
@@ -516,13 +736,14 @@ export default function AdminScreen({ navigation }) {
                   />
 
                   <Text style={styles.inputLabel}>Date *</Text>
-                  <TextInput
+                  <TouchableOpacity
                     style={styles.input}
-                    placeholder="e.g., March 15, 2024"
-                    placeholderTextColor={colors.textMuted}
-                    value={formData.date}
-                    onChangeText={(text) => setFormData({ ...formData, date: text })}
-                  />
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Text style={{ color: formData.date ? colors.text : colors.textMuted, fontSize: 15 }}>
+                      {formData.date || 'Select a date'}
+                    </Text>
+                  </TouchableOpacity>
 
                   <Text style={styles.inputLabel}>URL</Text>
                   <TextInput
@@ -545,9 +766,88 @@ export default function AdminScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.submitBtn}
-                onPress={modalType === 'event' ? createEvent : createNews}
+                onPress={
+                  editingId
+                    ? (modalType === 'event' ? updateEvent : updateNews)
+                    : (modalType === 'event' ? createEvent : createNews)
+                }
               >
-                <Text style={styles.submitBtnText}>Create</Text>
+                <Text style={styles.submitBtnText}>{editingId ? 'Update' : 'Create'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showDatePicker}
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.datePickerContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Date</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.datePickerScroll}>
+              <Text style={styles.datePickerSectionLabel}>Month</Text>
+              <View style={styles.monthGrid}>
+                {MONTHS.map((m, i) => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[styles.pickerChip, pickerMonth === i && styles.pickerChipSelected]}
+                    onPress={() => setPickerMonth(i)}
+                  >
+                    <Text style={[styles.pickerChipText, pickerMonth === i && styles.pickerChipTextSelected]}>
+                      {m.slice(0, 3)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.datePickerSectionLabel}>Day</Text>
+              <View style={styles.dayGrid}>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                  <TouchableOpacity
+                    key={d}
+                    style={[styles.dayChip, pickerDay === d && styles.dayChipSelected]}
+                    onPress={() => setPickerDay(d)}
+                  >
+                    <Text style={[styles.dayChipText, pickerDay === d && styles.dayChipTextSelected]}>
+                      {d}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.datePickerSectionLabel}>Year</Text>
+              <View style={styles.yearRow}>
+                {[2025, 2026, 2027, 2028].map(y => (
+                  <TouchableOpacity
+                    key={y}
+                    style={[styles.pickerChip, pickerYear === y && styles.pickerChipSelected]}
+                    onPress={() => setPickerYear(y)}
+                  >
+                    <Text style={[styles.pickerChipText, pickerYear === y && styles.pickerChipTextSelected]}>
+                      {y}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.submitBtn} onPress={confirmDate}>
+                <Text style={styles.submitBtnText}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -557,7 +857,7 @@ export default function AdminScreen({ navigation }) {
   );
 }
 
-const createStyles = (isDark) =>
+const createStyles = () =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -610,6 +910,20 @@ const createStyles = (isDark) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       marginBottom: 8,
+    },
+    recalcButton: {
+      marginTop: 12,
+      paddingVertical: 12,
+      borderRadius: 12,
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+    },
+    recalcButtonText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textMuted,
     },
     sectionHeader: {
       flexDirection: 'row',
@@ -913,5 +1227,113 @@ const createStyles = (isDark) =>
       fontSize: 10,
       color: colors.textMuted,
       fontWeight: '300',
+    },
+    datePickerContent: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 20,
+      maxHeight: '80%',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    datePickerScroll: {
+      padding: 20,
+      maxHeight: 400,
+    },
+    datePickerSectionLabel: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      marginBottom: 10,
+      marginTop: 8,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    monthGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 12,
+    },
+    dayGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginBottom: 12,
+    },
+    yearRow: {
+      flexDirection: 'row',
+      gap: 10,
+      marginBottom: 8,
+    },
+    pickerChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    pickerChipSelected: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    pickerChipText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    pickerChipTextSelected: {
+      color: '#fff',
+      fontWeight: '600',
+    },
+    dayChip: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    dayChipSelected: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    dayChipText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    dayChipTextSelected: {
+      color: '#fff',
+      fontWeight: '700',
+    },
+    typeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 4,
+    },
+    typeChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    typeChipSelected: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    typeChipText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    typeChipTextSelected: {
+      color: '#fff',
+      fontWeight: '600',
     },
   });

@@ -12,20 +12,23 @@ import {
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
+import { Ionicons } from '@expo/vector-icons';
 import { db } from '../config/firebase';
-import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, deleteDoc, getDoc, increment, query, where } from 'firebase/firestore';
 
 export default function AdminBillsScreen({ navigation }) {
-  const { isDark, user, userData } = useApp();
+  const { user, userData } = useApp();
   const [billStatus, setBillStatus] = useState('pending');
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [displayCount, setDisplayCount] = useState(20);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
 
   useEffect(() => {
     loadBills();
+    setDisplayCount(20);
   }, [billStatus]);
 
   const loadBills = async () => {
@@ -61,10 +64,49 @@ export default function AdminBillsScreen({ navigation }) {
 
   const approveBill = async (billId) => {
     try {
+      // Get the bill data first
+      const billDoc = await getDoc(doc(db, 'restaurant_expenses', billId));
+      const billData = billDoc.data();
+
+      // Update bill status
       await updateDoc(doc(db, 'restaurant_expenses', billId), {
         status: 'approved',
         approvedAt: new Date().toISOString(),
       });
+
+      // Update user stats (lifetimeSpend, totalOrders, lifetimeSavings)
+      if (billData?.userId && billData?.amount) {
+        const userRef = doc(db, 'users', billData.userId);
+        const discountRate = 0.1;
+        const savings = billData.amount * discountRate;
+        await updateDoc(userRef, {
+          lifetimeSpend: increment(billData.amount),
+          lifetimeSavings: increment(savings),
+          totalOrders: increment(1),
+        });
+
+        // Update favorite restaurant
+        try {
+          const q = query(
+            collection(db, 'restaurant_expenses'),
+            where('userId', '==', billData.userId),
+            where('status', '==', 'approved')
+          );
+          const expSnap = await getDocs(q);
+          const counts = {};
+          expSnap.forEach((d) => {
+            const r = d.data().restaurant;
+            if (r) counts[r] = (counts[r] || 0) + 1;
+          });
+          const favorite = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, '');
+          if (favorite) {
+            await updateDoc(userRef, { favoriteRestaurant: favorite });
+          }
+        } catch (favErr) {
+          console.error('Error updating favorite restaurant:', favErr);
+        }
+      }
+
       Alert.alert('Success', 'Expense approved');
       loadBills();
     } catch (error) {
@@ -84,8 +126,11 @@ export default function AdminBillsScreen({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, 'restaurant_expenses', billId));
-              Alert.alert('Success', 'Expense rejected and deleted');
+              await updateDoc(doc(db, 'restaurant_expenses', billId), {
+                status: 'rejected',
+                rejectedAt: new Date().toISOString(),
+              });
+              Alert.alert('Success', 'Expense rejected');
               loadBills();
             } catch (error) {
               Alert.alert('Error', 'Failed to reject expense');
@@ -104,7 +149,7 @@ export default function AdminBillsScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bill Management</Text>
         <View style={{ width: 40 }} />
@@ -117,9 +162,9 @@ export default function AdminBillsScreen({ navigation }) {
           onPress={() => setShowDropdown(!showDropdown)}
         >
           <Text style={styles.dropdownText}>
-            {billStatus === 'pending' ? 'Pending Bills' : 'Approved Bills'}
+            {billStatus === 'pending' ? 'Pending Bills' : billStatus === 'approved' ? 'Approved Bills' : 'Rejected Bills'}
           </Text>
-          <Text style={styles.dropdownIcon}>{showDropdown ? '▲' : '▼'}</Text>
+          <Ionicons name={showDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
         </TouchableOpacity>
 
         {showDropdown && (
@@ -142,6 +187,15 @@ export default function AdminBillsScreen({ navigation }) {
             >
               <Text style={styles.dropdownItemText}>Approved Bills</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                setBillStatus('rejected');
+                setShowDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>Rejected Bills</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -158,7 +212,7 @@ export default function AdminBillsScreen({ navigation }) {
             <Text style={styles.emptyText}>No {billStatus} expenses</Text>
           </View>
         ) : (
-          bills.map(bill => (
+          bills.slice(0, displayCount).map(bill => (
             <View key={bill.id} style={styles.billCard}>
               <View style={styles.billHeader}>
                 <View style={styles.billInfo}>
@@ -185,7 +239,16 @@ export default function AdminBillsScreen({ navigation }) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.actionButton, styles.approveButton]}
-                    onPress={() => approveBill(bill.id)}
+                    onPress={() => {
+                      Alert.alert(
+                        'Approve Expense',
+                        `Approve ₺${bill.amount?.toFixed(2)} from ${bill.userName} at ${bill.restaurant}?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Approve', onPress: () => approveBill(bill.id) },
+                        ]
+                      );
+                    }}
                   >
                     <Text style={styles.approveButtonText}>Approve</Text>
                   </TouchableOpacity>
@@ -194,12 +257,20 @@ export default function AdminBillsScreen({ navigation }) {
             </View>
           ))
         )}
+        {bills.length > displayCount && (
+          <TouchableOpacity
+            style={styles.loadMoreButton}
+            onPress={() => setDisplayCount(prev => prev + 20)}
+          >
+            <Text style={styles.loadMoreText}>Load More ({bills.length - displayCount} remaining)</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (isDark) =>
+const createStyles = () =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -360,5 +431,18 @@ const createStyles = (isDark) =>
     emptyText: {
       fontSize: 16,
       color: colors.textMuted,
+    },
+    loadMoreButton: {
+      padding: 16,
+      borderRadius: 12,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      marginTop: 16,
+      marginBottom: 16,
+    },
+    loadMoreText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#fff',
     },
   });

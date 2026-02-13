@@ -29,8 +29,7 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -42,6 +41,13 @@
         {
           "photosPermission": "The app needs access to your photos to upload bills.",
           "cameraPermission": "The app needs access to your camera to take photos of bills."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#D32F2F"
         }
       ]
     ],

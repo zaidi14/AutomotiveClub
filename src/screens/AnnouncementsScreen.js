@@ -6,71 +6,38 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleSheet,
-  Dimensions,
-  RefreshControl,
   ActivityIndicator,
+  TextInput,
+  RefreshControl,
 } from 'react-native';
-import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
 import { db } from '../config/firebase';
-import { collection, getDocs, query, orderBy, onSnapshot } from 'firebase/firestore';
-
-const { width } = Dimensions.get('window');
+import { collection, onSnapshot } from 'firebase/firestore';
 
 export default function AnnouncementsScreen() {
-  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const styles = createStyles();
 
-  useEffect(() => {
-    try {
-      const q = query(
-        collection(db, 'announcements'),
-        orderBy('date', 'desc')
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setEvents(data);
-        setLoading(false);
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.log('Error fetching announcements:', error);
-      setLoading(false);
-    }
-  }, []);
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
   useEffect(() => {
-    loadEvents();
-  }, []);
-
-  const loadEvents = async () => {
-    try {
-      setLoading(true);
-      const snapshot = await getDocs(collection(db, 'events'));
-      const eventsList = snapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(collection(db, 'events'), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setEvents(eventsList);
-    } catch (error) {
-      console.error('Error loading events:', error);
-    } finally {
+      setEvents(data);
       setLoading(false);
-    }
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadEvents().then(() => setRefreshing(false));
-  };
+    });
+    return unsubscribe;
+  }, []);
 
   const getTypeColor = (type) => {
     const typeColors = {
@@ -97,10 +64,8 @@ export default function AnnouncementsScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
-        }
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
         {/* Header */}
         <View style={styles.headerSection}>
@@ -110,7 +75,7 @@ export default function AnnouncementsScreen() {
         </View>
 
         {/* Loading State */}
-        {loading && !refreshing ? (
+        {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.accent} />
           </View>
@@ -122,7 +87,14 @@ export default function AnnouncementsScreen() {
           </View>
         ) : (
           <View style={styles.eventsContainer}>
-            {events.map((event) => (
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search events..."
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {events.filter(e => e.title?.toLowerCase().includes(searchQuery.toLowerCase())).map((event) => (
               <TouchableOpacity key={event.id} style={styles.eventCard}>
                 <View style={styles.eventHeader}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
@@ -151,7 +123,7 @@ const createStyles = () =>
     },
     scrollContent: {
       paddingHorizontal: 24,
-      paddingTop: 24,
+      paddingTop: 60,
       paddingBottom: 40,
     },
     headerSection: {
@@ -179,6 +151,17 @@ const createStyles = () =>
     },
     eventsContainer: {
       gap: 16,
+    },
+    searchInput: {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderRadius: 16,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+      fontSize: 15,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 16,
     },
     emptyState: {
       alignItems: 'center',

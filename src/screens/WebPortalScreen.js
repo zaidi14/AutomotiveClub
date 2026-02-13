@@ -8,17 +8,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function WebPortalScreen() {
-  const { isDark } = useApp();
   const webViewRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles();
 
   const injectedCSS = `
     /* Hide website header/footer for native feel */
@@ -72,7 +71,7 @@ export default function WebPortalScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle="light-content" />
       
       {/* Navigation Bar */}
       <View style={styles.navbar}>
@@ -82,7 +81,7 @@ export default function WebPortalScreen() {
           disabled={!canGoBack}
         >
           <Text style={[styles.navButtonText, !canGoBack && styles.navButtonTextDisabled]}>
-            ←
+            <Ionicons name="arrow-back" size={18} color={!canGoBack ? colors.subText : colors.lightText} />
           </Text>
         </TouchableOpacity>
 
@@ -92,7 +91,7 @@ export default function WebPortalScreen() {
           disabled={!canGoForward}
         >
           <Text style={[styles.navButtonText, !canGoForward && styles.navButtonTextDisabled]}>
-            →
+            <Ionicons name="arrow-forward" size={18} color={!canGoForward ? colors.subText : colors.lightText} />
           </Text>
         </TouchableOpacity>
 
@@ -101,7 +100,7 @@ export default function WebPortalScreen() {
         </View>
 
         <TouchableOpacity style={styles.navButton} onPress={reload}>
-          <Text style={styles.navButtonText}>↻</Text>
+          <Ionicons name="reload" size={18} color={colors.lightText} />
         </TouchableOpacity>
       </View>
 
@@ -124,6 +123,16 @@ export default function WebPortalScreen() {
             <Text style={styles.loadingText}>Loading website...</Text>
           </View>
         )}
+        renderError={() => (
+          <View style={styles.errorContainer}>
+            <Ionicons name="cloud-offline-outline" size={64} color={colors.textMuted} />
+            <Text style={styles.errorTitle}>Unable to load page</Text>
+            <Text style={styles.errorDesc}>Check your internet connection and try again</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={reload}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       />
 
       {loading && (
@@ -135,10 +144,10 @@ export default function WebPortalScreen() {
   );
 }
 
-const createStyles = (isDark) => StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
+    backgroundColor: colors.darkBg,
   },
   navbar: {
     flexDirection: 'row',
@@ -146,21 +155,21 @@ const createStyles = (isDark) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     paddingTop: 40,
-    backgroundColor: isDark ? colors.darkCardBg : colors.lightCardBg,
+    backgroundColor: colors.darkCardBg,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? colors.darkBorder : colors.lightBorder,
+    borderBottomColor: colors.darkBorder,
   },
   navButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: isDark ? colors.primary : colors.primaryLight,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 4,
   },
   navButtonDisabled: {
-    backgroundColor: isDark ? colors.darkBorder : colors.lightBorder,
+    backgroundColor: colors.darkBorder,
     opacity: 0.5,
   },
   navButtonText: {
@@ -180,7 +189,7 @@ const createStyles = (isDark) => StyleSheet.create({
   navTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: isDark ? colors.lightText : colors.primary,
+    color: colors.lightText,
   },
   webview: {
     flex: 1,
@@ -189,17 +198,48 @@ const createStyles = (isDark) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: isDark ? colors.darkBg : colors.lightBg,
+    backgroundColor: colors.darkBg,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: isDark ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(18, 18, 18, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: isDark ? colors.silver : colors.subText,
+    color: colors.silver,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.darkBg,
+    padding: 40,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  errorDesc: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

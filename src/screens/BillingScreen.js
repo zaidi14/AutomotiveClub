@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleSheet,
-  Dimensions,
   Alert,
   ActivityIndicator,
   TextInput,
@@ -14,13 +13,13 @@ import {
   Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
 import { db } from '../config/firebase';
 import { cloudinaryConfig } from '../config/cloudinary';
+import { Ionicons } from '@expo/vector-icons';
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-
-const { width } = Dimensions.get('window');
 
 // Restaurant list for the dropdown
 const RESTAURANTS = [
@@ -62,6 +61,8 @@ export default function BillingScreen() {
   const [amount, setAmount] = useState('');
   const [billImage, setBillImage] = useState(null);
   const [showRestaurantPicker, setShowRestaurantPicker] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [previewImage, setPreviewImage] = useState(null);
 
   const styles = createStyles();
 
@@ -96,7 +97,7 @@ export default function BillingScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -129,10 +130,17 @@ export default function BillingScreen() {
     setSubmitting(true);
 
     try {
+      // Compress image before upload
+      const compressed = await ImageManipulator.manipulateAsync(
+        billImage.uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
       // Upload image to Cloudinary
       const formData = new FormData();
       formData.append('file', {
-        uri: billImage.uri,
+        uri: compressed.uri,
         type: 'image/jpeg',
         name: `bill_${Date.now()}.jpg`,
       });
@@ -181,6 +189,11 @@ export default function BillingScreen() {
   };
 
   const deleteExpense = (expenseId) => {
+    const expense = expenses.find(e => e.id === expenseId);
+    if (expense && expense.status !== 'pending') {
+      Alert.alert('Cannot Delete', 'Only pending expenses can be deleted.');
+      return;
+    }
     Alert.alert(
       'Delete Expense',
       'Are you sure you want to delete this restaurant expense?',
@@ -247,7 +260,7 @@ export default function BillingScreen() {
 
           {/* Amount Input */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Amount ($)</Text>
+            <Text style={styles.label}>Amount (₺)</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g., 45.99"
@@ -281,7 +294,7 @@ export default function BillingScreen() {
                 style={styles.photoButtonSingle}
                 onPress={takeBillPhoto}
               >
-                <Text style={styles.photoButtonIcon}>📷</Text>
+                <Ionicons name="camera" size={32} color={colors.text} />
                 <Text style={styles.photoButtonText}>Take Photo</Text>
               </TouchableOpacity>
             )}
@@ -309,7 +322,7 @@ export default function BillingScreen() {
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <Text style={styles.submitButtonIcon}>✓</Text>
+                  <Ionicons name="checkmark" size={16} color="#fff" />
                   <Text style={styles.submitButtonText}>Submit</Text>
                 </>
               )}
@@ -329,7 +342,7 @@ export default function BillingScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Select Restaurant</Text>
                 <TouchableOpacity onPress={() => setShowRestaurantPicker(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
+                  <Ionicons name="close" size={24} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.restaurantList}>
@@ -363,6 +376,15 @@ export default function BillingScreen() {
 
         {/* Expenses List */}
         <View style={styles.billsSection}>
+          {expenses.length > 0 && (
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by restaurant..."
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          )}
           {expenses.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🍽️</Text>
@@ -371,9 +393,9 @@ export default function BillingScreen() {
             </View>
           ) : (
             <>
-              <Text style={styles.billsTitle}>Recent Expenses ({expenses.length})</Text>
+              <Text style={styles.billsTitle}>Recent Expenses ({expenses.filter(e => e.restaurant.toLowerCase().includes(searchQuery.toLowerCase())).length})</Text>
               <View style={styles.billsList}>
-                {expenses.map((expense) => (
+                {expenses.filter(e => e.restaurant.toLowerCase().includes(searchQuery.toLowerCase())).map((expense) => (
                   <View key={expense.id} style={styles.billCard}>
                     <View style={styles.billIcon}>
                       <Text style={styles.billIconEmoji}>🍽️</Text>
@@ -381,7 +403,12 @@ export default function BillingScreen() {
 
                     <View style={styles.billInfo}>
                       <Text style={styles.billName}>{expense.restaurant}</Text>
-                      <Text style={styles.billAmount}>${expense.amount.toFixed(2)}</Text>
+                      <Text style={styles.billAmount}>₺{expense.amount.toFixed(2)}</Text>
+                      <View style={[styles.statusBadge, { backgroundColor: expense.status === 'approved' ? 'rgba(76, 175, 80, 0.1)' : expense.status === 'rejected' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(255, 167, 38, 0.1)' }]}>
+                        <Text style={[styles.statusText, { color: expense.status === 'approved' ? '#4CAF50' : expense.status === 'rejected' ? '#F44336' : '#FFA726' }]}>
+                          {(expense.status || 'pending').toUpperCase()}
+                        </Text>
+                      </View>
                       <Text style={styles.billDate}>
                         {expense.createdAt?.toDate
                           ? expense.createdAt.toDate().toLocaleDateString()
@@ -390,19 +417,23 @@ export default function BillingScreen() {
                     </View>
 
                     {expense.imageUrl && (
-                      <Image 
-                        source={{ uri: expense.imageUrl }} 
-                        style={styles.billThumbnail}
-                        resizeMode="cover"
-                      />
+                      <TouchableOpacity onPress={() => setPreviewImage(expense.imageUrl)}>
+                        <Image 
+                          source={{ uri: expense.imageUrl }} 
+                          style={styles.billThumbnail}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
                     )}
 
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => deleteExpense(expense.id)}
-                    >
-                      <Text style={styles.deleteButtonText}>🗑️</Text>
-                    </TouchableOpacity>
+                    {(!expense.status || expense.status === 'pending') && (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => deleteExpense(expense.id)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#F44336" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
               </View>
@@ -410,6 +441,28 @@ export default function BillingScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Full-screen Image Preview */}
+      <Modal
+        visible={!!previewImage}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPreviewImage(null)}
+      >
+        <View style={styles.previewOverlay}>
+          <TouchableOpacity
+            style={styles.previewCloseButton}
+            onPress={() => setPreviewImage(null)}
+          >
+            <Ionicons name="close" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: previewImage }}
+            style={styles.previewImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -425,7 +478,7 @@ const createStyles = () =>
     },
     scrollContent: {
       paddingHorizontal: 24,
-      paddingTop: 24,
+      paddingTop: 60,
       paddingBottom: 40,
     },
     headerSection: {
@@ -695,6 +748,29 @@ const createStyles = () =>
     deleteButtonText: {
       fontSize: 18,
     },
+    searchInput: {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderRadius: 16,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+      fontSize: 15,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 16,
+    },
+    statusBadge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      marginTop: 4,
+    },
+    statusText: {
+      fontSize: 10,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
     selectedText: {
       fontSize: 15,
       color: colors.text,
@@ -812,5 +888,32 @@ const createStyles = () =>
       fontSize: 18,
       color: colors.accent,
       fontWeight: '600',
+    },
+    previewOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.95)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    previewCloseButton: {
+      position: 'absolute',
+      top: 60,
+      right: 20,
+      zIndex: 10,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    previewCloseText: {
+      fontSize: 20,
+      color: '#fff',
+      fontWeight: '600',
+    },
+    previewImage: {
+      width: '100%',
+      height: '80%',
     },
   });

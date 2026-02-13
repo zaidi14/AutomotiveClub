@@ -6,20 +6,17 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleSheet,
-  Dimensions,
   Alert,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '../config/firebase';
-import { setDoc, doc } from 'firebase/firestore';
+import { signUp } from '../services/authService';
 import { colors } from '../styles/colors';
-
-const { width, height } = Dimensions.get('window');
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,6 +34,11 @@ export default function RegisterScreen({ navigation }) {
   const handleRegister = async () => {
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+
+    if (!studentId.trim()) {
+      Alert.alert('Error', 'Please enter your student ID');
       return;
     }
 
@@ -66,25 +68,11 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+    const result = await signUp(email, password, name.trim(), studentId.trim());
+    setLoading(false);
 
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        name: name.trim(),
-        email: email.trim(),
-        createdAt: new Date(),
-        role: 'user',
-      });
-
-      Alert.alert('Success', 'Account created! Please log in.', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') },
-      ]);
-    } catch (error) {
-      Alert.alert('Registration Error', error.message);
-    } finally {
-      setLoading(false);
+    if (!result.success) {
+      Alert.alert('Registration Error', result.error);
     }
   };
 
@@ -111,7 +99,7 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.formGroup}>
             <Text style={styles.label}>Full Name</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>👤</Text>
+              <Ionicons name="person-outline" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
                 placeholder="Your full name"
@@ -123,11 +111,27 @@ export default function RegisterScreen({ navigation }) {
             </View>
           </View>
 
+          {/* Student ID Input */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Student ID</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="school-outline" size={18} color={colors.textMuted} />
+              <TextInput
+                style={styles.input}
+                placeholder="Your student ID"
+                placeholderTextColor={colors.textMuted}
+                value={studentId}
+                onChangeText={setStudentId}
+                editable={!loading}
+              />
+            </View>
+          </View>
+
           {/* Email Input */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Email Address</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>✉️</Text>
+              <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
                 placeholder="your@email.com"
@@ -145,7 +149,7 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.formGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>🔐</Text>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
                 placeholder="At least 6 characters"
@@ -159,9 +163,7 @@ export default function RegisterScreen({ navigation }) {
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.toggleButton}
               >
-                <Text style={styles.toggleIcon}>
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </Text>
+                <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -170,7 +172,7 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.formGroup}>
             <Text style={styles.label}>Confirm Password</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>🔐</Text>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm your password"
@@ -184,9 +186,7 @@ export default function RegisterScreen({ navigation }) {
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 style={styles.toggleButton}
               >
-                <Text style={styles.toggleIcon}>
-                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                </Text>
+                <Ionicons name={showConfirmPassword ? 'eye' : 'eye-off'} size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -197,11 +197,11 @@ export default function RegisterScreen({ navigation }) {
               style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}
               onPress={() => setAgreeTerms(!agreeTerms)}
             >
-              {agreeTerms && <Text style={styles.checkmark}>✓</Text>}
+              {agreeTerms && <Ionicons name="checkmark" size={14} color={colors.text} />}
             </TouchableOpacity>
             <Text style={styles.termsText}>
               I agree to the{' '}
-              <Text style={styles.termsLink}>Terms and Conditions</Text>
+              <Text style={styles.termsLink} onPress={() => Alert.alert('Terms and Conditions', 'By joining the AGU Automotive Club, you agree to:\n\n1. Use the app responsibly\n2. Submit only genuine restaurant bills\n3. Not share your account credentials\n4. Follow club rules and guidelines\n5. Respect other members\n\nViolation of these terms may result in account suspension.')}>Terms and Conditions</Text>
             </Text>
           </View>
 
@@ -215,7 +215,7 @@ export default function RegisterScreen({ navigation }) {
               <ActivityIndicator size="small" color={colors.text} />
             ) : (
               <>
-                <Text style={styles.registerButtonIcon}>✓</Text>
+                <Ionicons name="checkmark" size={18} color={colors.text} />
                 <Text style={styles.registerButtonText}>Create Account</Text>
               </>
             )}

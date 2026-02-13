@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-  Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { signOut } from '../services/authService';
 import { colors } from '../styles/colors';
 import { useApp } from '../context/AppContext';
-
-const { width } = Dimensions.get('window');
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen({ navigation }) {
-  const { user, userData } = useApp();
+  const { user, userData, refreshUserData } = useApp();
   const [refreshing, setRefreshing] = useState(false);
 
   const styles = createStyles();
@@ -33,6 +32,12 @@ export default function HomeScreen({ navigation }) {
         },
       },
     ]);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshUserData();
+    setRefreshing(false);
   };
 
   if (!userData) {
@@ -78,6 +83,9 @@ export default function HomeScreen({ navigation }) {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
@@ -85,9 +93,14 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.greeting}>Welcome back,</Text>
             <Text style={styles.userName}>{userData.name || 'Member'}</Text>
           </View>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutIcon}>⏻</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => navigation.navigate('Profile')}>
+              <Ionicons name="settings-outline" size={22} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+              <Ionicons name="power" size={22} color={colors.text} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Card Info */}
@@ -140,7 +153,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.actionTitle}>Upload Bill</Text>
               <Text style={styles.actionDesc}>Track & Add your purchases</Text>
             </View>
-            <Text style={styles.actionArrow}>▶</Text>
+            <Ionicons name="chevron-forward" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -177,7 +190,7 @@ const createStyles = () =>
     },
     scrollContent: {
       paddingHorizontal: 24,
-      paddingTop: 24,
+      paddingTop: 60,
       paddingBottom: 40,
     },
     centerContainer: {
@@ -221,6 +234,23 @@ const createStyles = () =>
     logoutIcon: {
       fontSize: 24,
       color: colors.text,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    headerActionBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    headerActionIcon: {
+      fontSize: 22,
     },
     memberCard: {
       backgroundColor: colors.darkCardBg,
@@ -285,12 +315,13 @@ const createStyles = () =>
       textTransform: 'uppercase',
     },
     statsGrid: {
-      gap: 16,
+      flexDirection: 'row',
+      gap: 10,
     },
     statCard: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
-      padding: 24,
+      borderRadius: 16,
+      padding: 14,
       alignItems: 'center',
       borderWidth: 1,
       borderColor: colors.border,
@@ -300,26 +331,31 @@ const createStyles = () =>
       marginBottom: 16,
     },
     gaugeOuter: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
       borderWidth: 2,
-      borderColor: colors.border,
+      borderColor: colors.accent,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      backgroundColor: 'rgba(211, 47, 47, 0.05)',
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
     },
     gaugeInner: {
-      width: 68,
-      height: 68,
-      borderRadius: 34,
+      width: 46,
+      height: 46,
+      borderRadius: 23,
       borderWidth: 0,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'transparent',
     },
     statIconText: {
-      fontSize: 18,
+      fontSize: 13,
       fontWeight: '600',
       color: colors.text,
     },

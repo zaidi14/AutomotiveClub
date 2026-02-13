@@ -9,14 +9,18 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Modal,
 } from 'react-native';
-import { signIn } from '../services/authService';
+import { signIn, resetPassword } from '../services/authService';
 import { colors } from '../styles/colors';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   const styles = createStyles();
 
@@ -32,6 +36,22 @@ export default function LoginScreen({ navigation }) {
 
     if (!result.success) {
       Alert.alert('Login Failed', result.error);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const emailToReset = resetEmail || email;
+    if (!emailToReset) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+    const result = await resetPassword(emailToReset);
+    if (result.success) {
+      Alert.alert('Success', 'Password reset email sent. Check your inbox.');
+      setShowResetModal(false);
+      setResetEmail('');
+    } else {
+      Alert.alert('Error', result.error);
     }
   };
 
@@ -62,7 +82,7 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.inputWrapper}>
             <Text style={styles.inputLabel}>Email Address</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>✉️</Text>
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.inputIconView} />
               <TextInput
                 style={styles.input}
                 placeholder="user@gmail.com"
@@ -80,7 +100,7 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.inputWrapper}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>🔐</Text>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.inputIconView} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
@@ -92,6 +112,11 @@ export default function LoginScreen({ navigation }) {
               />
             </View>
           </View>
+
+          {/* Forgot Password */}
+          <TouchableOpacity onPress={() => { setResetEmail(email); setShowResetModal(true); }} style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
 
           {/* Login Button */}
           <TouchableOpacity
@@ -127,6 +152,46 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.footerText}>© 2026 AGU Automotive Club</Text>
         </View>
       </ScrollView>
+
+      {/* Password Reset Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showResetModal}
+        onRequestClose={() => setShowResetModal(false)}
+      >
+        <View style={styles.resetModalOverlay}>
+          <View style={styles.resetModalContent}>
+            <Text style={styles.resetModalTitle}>Reset Password</Text>
+            <Text style={styles.resetModalDesc}>
+              Enter your email address and we'll send you a link to reset your password.
+            </Text>
+            <TextInput
+              style={styles.resetModalInput}
+              placeholder="Enter your email"
+              placeholderTextColor={colors.textMuted}
+              value={resetEmail}
+              onChangeText={setResetEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <View style={styles.resetModalActions}>
+              <TouchableOpacity
+                style={styles.resetModalCancel}
+                onPress={() => { setShowResetModal(false); setResetEmail(''); }}
+              >
+                <Text style={styles.resetModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.resetModalSend}
+                onPress={handleForgotPassword}
+              >
+                <Text style={styles.resetModalSendText}>Send Link</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -227,6 +292,9 @@ const createStyles = () =>
       fontSize: 20,
       marginRight: 16,
     },
+    inputIconView: {
+      marginRight: 16,
+    },
     input: {
       flex: 1,
       paddingVertical: 18,
@@ -290,6 +358,16 @@ const createStyles = () =>
       fontWeight: '500',
       letterSpacing: 0,
     },
+    forgotPassword: {
+      alignSelf: 'flex-end',
+      marginTop: 4,
+      marginBottom: 8,
+    },
+    forgotPasswordText: {
+      fontSize: 14,
+      color: colors.accent,
+      fontWeight: '500',
+    },
     footer: {
       alignItems: 'center',
       marginTop: 32,
@@ -298,5 +376,70 @@ const createStyles = () =>
       fontSize: 11,
       color: colors.textMuted,
       fontWeight: '500',
+    },
+    resetModalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    resetModalContent: {
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 20,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    resetModalTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 12,
+    },
+    resetModalDesc: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginBottom: 20,
+      lineHeight: 20,
+    },
+    resetModalInput: {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderRadius: 16,
+      paddingHorizontal: 18,
+      paddingVertical: 16,
+      fontSize: 15,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    resetModalActions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 20,
+    },
+    resetModalCancel: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+    },
+    resetModalCancelText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    resetModalSend: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 12,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+    },
+    resetModalSendText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: '#fff',
     },
   });

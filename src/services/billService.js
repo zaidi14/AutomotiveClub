@@ -42,7 +42,7 @@ export const uploadBillImage = async (uri, userId) => {
 
 export const createBill = async (billData) => {
   try {
-    const billRef = await addDoc(collection(db, 'bills'), {
+    const billRef = await addDoc(collection(db, 'restaurant_expenses'), {
       ...billData,
       status: 'pending',
       createdAt: new Date().toISOString()
@@ -68,8 +68,9 @@ export const updateUserStats = async (userId, amount, restaurantName, discountRa
     
     // Calculate favorite restaurant
     const billsQuery = query(
-      collection(db, 'bills'),
-      where('userId', '==', userId)
+      collection(db, 'restaurant_expenses'),
+      where('userId', '==', userId),
+      where('status', '==', 'approved')
     );
     
     const billsSnapshot = await getDocs(billsQuery);
@@ -77,7 +78,7 @@ export const updateUserStats = async (userId, amount, restaurantName, discountRa
     
     billsSnapshot.forEach((doc) => {
       const bill = doc.data();
-      restaurantCounts[bill.restaurantName] = (restaurantCounts[bill.restaurantName] || 0) + 1;
+      restaurantCounts[bill.restaurant] = (restaurantCounts[bill.restaurant] || 0) + 1;
     });
     
     const favoriteRestaurant = Object.keys(restaurantCounts).reduce((a, b) => 
@@ -98,7 +99,7 @@ export const updateUserStats = async (userId, amount, restaurantName, discountRa
 export const getUserBills = async (userId) => {
   try {
     const billsQuery = query(
-      collection(db, 'bills'),
+      collection(db, 'restaurant_expenses'),
       where('userId', '==', userId)
     );
     

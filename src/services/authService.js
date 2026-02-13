@@ -1,9 +1,10 @@
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  signOut as firebaseSignOut 
+  signOut as firebaseSignOut,
+  sendPasswordResetEmail 
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 export const signIn = async (email, password) => {
@@ -22,6 +23,7 @@ export const signUp = async (email, password, name, studentId) => {
 
     // Create user document in Firestore
     await setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
       name,
       email,
       studentId,
@@ -29,7 +31,8 @@ export const signUp = async (email, password, name, studentId) => {
       lifetimeSavings: 0,
       totalOrders: 0,
       favoriteRestaurant: '',
-      createdAt: new Date().toISOString()
+      role: 'user',
+      createdAt: serverTimestamp(),
     });
 
     return { success: true, user };
@@ -41,6 +44,15 @@ export const signUp = async (email, password, name, studentId) => {
 export const signOut = async () => {
   try {
     await firebaseSignOut(auth);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const resetPassword = async (email) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

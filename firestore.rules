@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: check if the user is an admin
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper: check if the user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data; admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      // Users can create their own profile during registration
+      allow create: if isOwner(userId);
+      // Users can update their own profile (name, etc.); admins can update any user (stats recalc)
+      allow update: if isOwner(userId) || isAdmin();
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // Restaurant expenses (bills)
+    match /restaurant_expenses/{expenseId} {
+      // Users can read their own expenses; admins can read all
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      // Authenticated users can create expenses (their own)
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      // Users can update/delete their own pending expenses; admins can update any (approve/reject)
+      allow update: if isAdmin() ||
+        (isOwner(resource.data.userId) && resource.data.status == 'pending');
+      allow delete: if isAdmin() ||
+        (isOwner(resource.data.userId) && resource.data.status == 'pending');
+    }
+
+    // Events (announcements)
+    match /events/{eventId} {
+      // All authenticated users can read events
+      allow read: if isAuthenticated();
+      // Only admins can create, update, or delete events
+      allow create, update, delete: if isAdmin();
+    }
+
+    // News (newsletters/articles)
+    match /news/{newsId} {
+      // All authenticated users can read news
+      allow read: if isAuthenticated();
+      // Only admins can create, update, or delete news
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
