@@ -10,32 +10,65 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  Image,
+  Modal,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
-import { db, storage } from '../config/firebase';
+import { db } from '../config/firebase';
+import { cloudinaryConfig } from '../config/cloudinary';
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes } from 'firebase/storage';
 
 const { width } = Dimensions.get('window');
+
+// Restaurant list for the dropdown
+const RESTAURANTS = [
+  'Quakka Coffee',
+  'Raif',
+  'Alaçatı Muhallebicisi',
+  'Mehmet Chef',
+  'MaxGarden Cafe & Aile Okey Salonu',
+  'Nevada Coffee',
+  'Bizon Burger',
+  'Ohannes Burger',
+  'AGÜ Store',
+  'Romesta Coffee',
+  'So Dark',
+  'Social Coffee',
+  'The Coffee Factory',
+  'Coffy',
+  'Kasap ATK',
+  'Macbear Coffee',
+  'Sini Tavında',
+  'Kemal Ataklı',
+  'SD Döner',
+  'Steg Coffee',
+  'Cajun Corner',
+  'Cedric Burger',
+  'Springfield (Yeni Nesil Dürüm)',
+  'Mars Playstation',
+  'La Casa De Pilav',
+  'La Vi En Tasse',
+  'Lava Coffee',
+];
 
 export default function BillingScreen() {
   const { user, userData } = useApp();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [bills, setBills] = useState([]);
-  const [showUploadForm, setShowUploadForm] = useState(false);
-  const [billName, setBillName] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [expenses, setExpenses] = useState([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState('');
+  const [amount, setAmount] = useState('');
+  const [billImage, setBillImage] = useState(null);
+  const [showRestaurantPicker, setShowRestaurantPicker] = useState(false);
 
   const styles = createStyles();
 
   React.useEffect(() => {
     if (user?.uid) {
       const q = query(
-        collection(db, 'bills'),
+        collection(db, 'restaurant_expenses'),
         where('userId', '==', user.uid)
       );
 
@@ -44,7 +77,7 @@ export default function BillingScreen() {
           id: doc.id,
           ...doc.data(),
         }));
-        setBills(data.sort((a, b) => b.uploadDate?.toDate?.() - a.uploadDate?.toDate?.() || 0));
+        setExpenses(data.sort((a, b) => b.createdAt?.toDate?.() - a.createdAt?.toDate?.() || 0));
         setLoading(false);
       });
 
@@ -52,82 +85,115 @@ export default function BillingScreen() {
     }
   }, [user?.uid]);
 
-  const pickDocument = async () => {
+  const takeBillPhoto = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'],
+      // Request camera permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is needed to take photos');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
       });
 
       if (!result.canceled) {
-        setSelectedFile(result.assets[0]);
+        setBillImage(result.assets[0]);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick document');
+      Alert.alert('Error', 'Failed to take photo');
     }
   };
 
-  const uploadBill = async () => {
-    if (!billName.trim()) {
-      Alert.alert('Error', 'Please enter a bill name');
+  const submitExpense = async () => {
+    if (!selectedRestaurant) {
+      Alert.alert('Error', 'Please select a restaurant');
       return;
     }
 
-    if (!selectedFile) {
-      Alert.alert('Error', 'Please select a file');
+    if (!amount.trim() || isNaN(parseFloat(amount))) {
+      Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
 
-    setUploading(true);
+    if (!billImage) {
+      Alert.alert('Error', 'Please take a photo of the bill');
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      const fileName = `bills/${user.uid}/${Date.now()}_${selectedFile.name}`;
-      const fileRef = ref(storage, fileName);
+      // Upload image to Cloudinary
+      const formData = new FormData();
+      formData.append('file', {
+        uri: billImage.uri,
+        type: 'image/jpeg',
+        name: `bill_${Date.now()}.jpg`,
+      });
+      formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+      formData.append('folder', 'restaurant_bills');
 
-      const fileData = await FileSystem.readAsStringAsync(selectedFile.uri, {
-        encoding: FileSystem.EncodingType.Base64,
+      const cloudinaryUrl = `${cloudinaryConfig.uploadUrl}/${cloudinaryConfig.cloudName}/image/upload`;
+      
+      const uploadResponse = await fetch(cloudinaryUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      const blob = new Blob([Buffer.from(fileData, 'base64')], {
-        type: selectedFile.mimeType,
-      });
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to Cloudinary');
+      }
 
-      await uploadBytes(fileRef, blob);
+      const uploadData = await uploadResponse.json();
+      const imageUrl = uploadData.secure_url;
 
-      await addDoc(collection(db, 'bills'), {
+      // Save expense to Firestore
+      await addDoc(collection(db, 'restaurant_expenses'), {
         userId: user.uid,
         userName: userData?.name || user.email,
-        billName: billName.trim(),
-        fileName: selectedFile.name,
-        fileUrl: fileName,
-        uploadDate: serverTimestamp(),
-        fileType: selectedFile.mimeType,
+        restaurant: selectedRestaurant,
+        amount: parseFloat(amount),
+        imageUrl: imageUrl,
+        cloudinaryPublicId: uploadData.public_id,
+        status: 'pending',
+        createdAt: serverTimestamp(),
       });
 
-      Alert.alert('Success', 'Bill uploaded successfully!');
-      setBillName('');
-      setSelectedFile(null);
-      setShowUploadForm(false);
+      Alert.alert('Success', 'Restaurant expense submitted successfully!');
+      setSelectedRestaurant('');
+      setAmount('');
+      setBillImage(null);
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload bill: ' + error.message);
+      console.error('Submit expense error:', error);
+      Alert.alert('Error', 'Failed to submit expense: ' + (error.message || 'Unknown error'));
     } finally {
-      setUploading(false);
+      setSubmitting(false);
     }
   };
 
-  const deleteBill = (billId) => {
+  const deleteExpense = (expenseId) => {
     Alert.alert(
-      'Delete Bill',
-      'Are you sure you want to delete this bill?',
+      'Delete Expense',
+      'Are you sure you want to delete this restaurant expense?',
       [
         { text: 'Cancel', onPress: () => {}, style: 'cancel' },
         {
           text: 'Delete',
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, 'bills', billId));
-              Alert.alert('Success', 'Bill deleted');
+              await deleteDoc(doc(db, 'restaurant_expenses', expenseId));
+              Alert.alert('Success', 'Expense deleted');
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete bill');
+              Alert.alert('Error', 'Failed to delete expense');
             }
           },
           style: 'destructive',
@@ -136,7 +202,7 @@ export default function BillingScreen() {
     );
   };
 
-  if (loading && bills.length === 0) {
+  if (loading && expenses.length === 0) {
     return (
       <View style={[styles.container, { justifyContent: 'center' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
@@ -155,137 +221,185 @@ export default function BillingScreen() {
       >
         {/* Header */}
         <View style={styles.headerSection}>
-          <Text style={styles.subtitle}>Billing</Text>
-          <Text style={styles.title}>My Bills</Text>
-          <Text style={styles.description}>Upload and manage your membership bills</Text>
+          <Text style={styles.subtitle}>Restaurant Expenses</Text>
+          <Text style={styles.title}>Add Restaurant Expense</Text>
+          <Text style={styles.description}>Track your restaurant dining expenses</Text>
         </View>
 
-        {/* Upload Button */}
-        {!showUploadForm && (
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => setShowUploadForm(true)}
-          >
-            <Text style={styles.uploadButtonIcon}>📤</Text>
-            <View style={styles.uploadButtonContent}>
-              <Text style={styles.uploadButtonTitle}>Upload New Bill</Text>
-              <Text style={styles.uploadButtonDesc}>Add a new bill for your membership</Text>
-            </View>
-            <Text style={styles.uploadButtonArrow}>→</Text>
-          </TouchableOpacity>
-        )}
+        {/* Expense Form */}
+        <View style={styles.uploadForm}>
+          <View style={styles.formHeader}>
+            <Text style={styles.formTitle}>Expense Details</Text>
+          </View>
 
-        {/* Upload Form */}
-        {showUploadForm && (
-          <View style={styles.uploadForm}>
-            <View style={styles.formHeader}>
-              <Text style={styles.formTitle}>Upload Bill</Text>
-              <TouchableOpacity onPress={() => {
-                setShowUploadForm(false);
-                setBillName('');
-                setSelectedFile(null);
-              }}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Bill Name Input */}
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Bill Name / Description</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Membership Bill 2024"
-                placeholderTextColor={colors.textMuted}
-                value={billName}
-                onChangeText={setBillName}
-              />
-            </View>
-
-            {/* File Selection */}
+          {/* Restaurant Dropdown */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Restaurant</Text>
             <TouchableOpacity
-              style={styles.fileSelectButton}
-              onPress={pickDocument}
+              style={styles.input}
+              onPress={() => setShowRestaurantPicker(true)}
             >
-              <Text style={styles.fileSelectIcon}>📎</Text>
-              {selectedFile ? (
-                <View>
-                  <Text style={styles.selectedFileName}>{selectedFile.name}</Text>
-                  <Text style={styles.selectedFileSize}>
-                    {(selectedFile.size / 1024).toFixed(2)} KB
-                  </Text>
-                </View>
+              <Text style={selectedRestaurant ? styles.selectedText : styles.placeholderText}>
+                {selectedRestaurant || 'Select a restaurant'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Amount Input */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Amount ($)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., 45.99"
+              placeholderTextColor={colors.textMuted}
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="decimal-pad"
+            />
+          </View>
+
+          {/* Bill Photo */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Bill Photo</Text>
+            
+            {billImage ? (
+              <View style={styles.imagePreviewContainer}>
+                <Image 
+                  source={{ uri: billImage.uri }} 
+                  style={styles.imagePreview}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  style={styles.changePhotoButton}
+                  onPress={takeBillPhoto}
+                >
+                  <Text style={styles.changePhotoText}>Retake Photo</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.photoButtonSingle}
+                onPress={takeBillPhoto}
+              >
+                <Text style={styles.photoButtonIcon}>📷</Text>
+                <Text style={styles.photoButtonText}>Take Photo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.formActions}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setSelectedRestaurant('');
+                setAmount('');
+                setBillImage(null);
+              }}
+              disabled={submitting}
+            >
+              <Text style={styles.cancelButtonText}>Clear</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+              onPress={submitExpense}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color={colors.text} />
               ) : (
-                <View>
-                  <Text style={styles.fileSelectTitle}>Choose File</Text>
-                  <Text style={styles.fileSelectDesc}>PDF or Image</Text>
-                </View>
+                <>
+                  <Text style={styles.submitButtonIcon}>✓</Text>
+                  <Text style={styles.submitButtonText}>Submit</Text>
+                </>
               )}
             </TouchableOpacity>
+          </View>
+        </View>
 
-            {/* Action Buttons */}
-            <View style={styles.formActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowUploadForm(false);
-                  setBillName('');
-                  setSelectedFile(null);
-                }}
-                disabled={uploading}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitButton, uploading && styles.submitButtonDisabled]}
-                onPress={uploadBill}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <ActivityIndicator size="small" color={colors.text} />
-                ) : (
-                  <>
-                    <Text style={styles.submitButtonIcon}>✓</Text>
-                    <Text style={styles.submitButtonText}>Upload</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+        {/* Restaurant Picker Modal */}
+        <Modal
+          visible={showRestaurantPicker}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowRestaurantPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Restaurant</Text>
+                <TouchableOpacity onPress={() => setShowRestaurantPicker(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.restaurantList}>
+                {RESTAURANTS.map((restaurant) => (
+                  <TouchableOpacity
+                    key={restaurant}
+                    style={[
+                      styles.restaurantItem,
+                      selectedRestaurant === restaurant && styles.restaurantItemSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedRestaurant(restaurant);
+                      setShowRestaurantPicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.restaurantItemText,
+                      selectedRestaurant === restaurant && styles.restaurantItemTextSelected,
+                    ]}>
+                      {restaurant}
+                    </Text>
+                    {selectedRestaurant === restaurant && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           </View>
-        )}
+        </Modal>
 
-        {/* Bills List */}
+        {/* Expenses List */}
         <View style={styles.billsSection}>
-          {bills.length === 0 ? (
+          {expenses.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📄</Text>
-              <Text style={styles.emptyText}>No bills uploaded yet</Text>
-              <Text style={styles.emptyDesc}>Upload your first bill to get started</Text>
+              <Text style={styles.emptyIcon}>🍽️</Text>
+              <Text style={styles.emptyText}>No expenses recorded yet</Text>
+              <Text style={styles.emptyDesc}>Add your first restaurant expense to get started</Text>
             </View>
           ) : (
             <>
-              <Text style={styles.billsTitle}>Recent Bills ({bills.length})</Text>
+              <Text style={styles.billsTitle}>Recent Expenses ({expenses.length})</Text>
               <View style={styles.billsList}>
-                {bills.map((bill) => (
-                  <View key={bill.id} style={styles.billCard}>
+                {expenses.map((expense) => (
+                  <View key={expense.id} style={styles.billCard}>
                     <View style={styles.billIcon}>
-                      <Text style={styles.billIconEmoji}>
-                        {bill.fileType?.includes('pdf') ? '📑' : '🖼️'}
-                      </Text>
+                      <Text style={styles.billIconEmoji}>🍽️</Text>
                     </View>
 
                     <View style={styles.billInfo}>
-                      <Text style={styles.billName}>{bill.billName}</Text>
-                      <Text style={styles.billFileName}>{bill.fileName}</Text>
+                      <Text style={styles.billName}>{expense.restaurant}</Text>
+                      <Text style={styles.billAmount}>${expense.amount.toFixed(2)}</Text>
                       <Text style={styles.billDate}>
-                        {bill.uploadDate?.toDate
-                          ? bill.uploadDate.toDate().toLocaleDateString()
+                        {expense.createdAt?.toDate
+                          ? expense.createdAt.toDate().toLocaleDateString()
                           : 'Unknown date'}
                       </Text>
                     </View>
 
+                    {expense.imageUrl && (
+                      <Image 
+                        source={{ uri: expense.imageUrl }} 
+                        style={styles.billThumbnail}
+                        resizeMode="cover"
+                      />
+                    )}
+
                     <TouchableOpacity
                       style={styles.deleteButton}
-                      onPress={() => deleteBill(bill.id)}
+                      onPress={() => deleteExpense(expense.id)}
                     >
                       <Text style={styles.deleteButtonText}>🗑️</Text>
                     </TouchableOpacity>
@@ -310,81 +424,87 @@ const createStyles = () =>
       flex: 1,
     },
     scrollContent: {
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 32,
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      paddingBottom: 40,
     },
     headerSection: {
-      marginBottom: 24,
+      marginBottom: 32,
     },
     subtitle: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.accentLight,
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.textMuted,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
-      marginBottom: 4,
+      marginBottom: 6,
     },
     title: {
       fontSize: 32,
-      fontWeight: '800',
+      fontWeight: '700',
       color: colors.text,
-      letterSpacing: 0.5,
+      letterSpacing: -0.5,
       marginBottom: 8,
     },
     description: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
-      fontWeight: '500',
+      fontWeight: '400',
     },
     uploadButton: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 16,
-      padding: 16,
+      borderRadius: 20,
+      padding: 20,
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 24,
-      borderWidth: 2,
-      borderColor: colors.accent,
-      gap: 12,
+      marginBottom: 28,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 2,
+      gap: 16,
     },
     uploadButtonIcon: {
-      fontSize: 32,
+      fontSize: 28,
     },
     uploadButtonContent: {
       flex: 1,
     },
     uploadButtonTitle: {
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 17,
+      fontWeight: '600',
       color: colors.text,
     },
     uploadButtonDesc: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textMuted,
-      marginTop: 2,
+      marginTop: 4,
+      fontWeight: '400',
     },
     uploadButtonArrow: {
-      fontSize: 18,
-      color: colors.accent,
+      fontSize: 20,
+      color: colors.text,
     },
     uploadForm: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 16,
-      padding: 20,
+      borderRadius: 20,
+      padding: 24,
       borderWidth: 1,
       borderColor: colors.border,
-      marginBottom: 24,
+      marginBottom: 28,
     },
     formHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 16,
+      marginBottom: 24,
     },
     formTitle: {
-      fontSize: 18,
-      fontWeight: '700',
+      fontSize: 20,
+      fontWeight: '600',
       color: colors.text,
     },
     closeButton: {
@@ -392,34 +512,34 @@ const createStyles = () =>
       color: colors.textMuted,
     },
     formGroup: {
-      marginBottom: 16,
+      marginBottom: 20,
     },
     label: {
-      fontSize: 13,
-      fontWeight: '600',
+      fontSize: 14,
+      fontWeight: '500',
       color: colors.text,
-      marginBottom: 8,
+      marginBottom: 10,
     },
     input: {
-      backgroundColor: colors.darkCardBg,
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      fontSize: 14,
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      borderRadius: 16,
+      paddingHorizontal: 18,
+      paddingVertical: 16,
+      fontSize: 15,
       color: colors.text,
       borderWidth: 1,
       borderColor: colors.border,
     },
     fileSelectButton: {
-      backgroundColor: colors.darkCardBg,
-      borderRadius: 10,
-      padding: 16,
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      borderRadius: 16,
+      padding: 18,
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
       borderColor: colors.border,
-      gap: 12,
-      marginBottom: 16,
+      gap: 14,
+      marginBottom: 20,
     },
     fileSelectIcon: {
       fontSize: 28,
@@ -450,21 +570,22 @@ const createStyles = () =>
     },
     cancelButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 10,
+      paddingVertical: 16,
+      borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: 'center',
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
     },
     cancelButtonText: {
-      fontSize: 14,
-      fontWeight: '700',
+      fontSize: 15,
+      fontWeight: '500',
       color: colors.text,
     },
     submitButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 10,
+      paddingVertical: 16,
+      borderRadius: 16,
       backgroundColor: colors.accent,
       flexDirection: 'row',
       justifyContent: 'center',
@@ -476,13 +597,13 @@ const createStyles = () =>
     },
     submitButtonIcon: {
       fontSize: 16,
-      color: colors.text,
-      fontWeight: '700',
+      color: '#fff',
+      fontWeight: '600',
     },
     submitButtonText: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+      color: '#fff',
     },
     billsSection: {
       marginTop: 8,
@@ -506,57 +627,190 @@ const createStyles = () =>
       color: colors.textMuted,
     },
     billsTitle: {
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 17,
+      fontWeight: '600',
       color: colors.text,
-      marginBottom: 12,
+      marginBottom: 16,
     },
     billsList: {
       gap: 12,
     },
     billCard: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 12,
-      padding: 12,
+      borderRadius: 16,
+      padding: 16,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: 14,
       borderWidth: 1,
       borderColor: colors.border,
     },
     billIcon: {
-      width: 44,
-      height: 44,
-      borderRadius: 10,
-      backgroundColor: colors.primaryDark,
+      width: 52,
+      height: 52,
+      borderRadius: 14,
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
       justifyContent: 'center',
       alignItems: 'center',
     },
     billIconEmoji: {
-      fontSize: 20,
+      fontSize: 24,
     },
     billInfo: {
       flex: 1,
     },
     billName: {
-      fontSize: 14,
-      fontWeight: '700',
+      fontSize: 15,
+      fontWeight: '500',
       color: colors.text,
     },
-    billFileName: {
-      fontSize: 11,
-      color: colors.textMuted,
-      marginTop: 2,
+    billAmount: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.accent,
+      marginTop: 4,
     },
-    billDate: {
-      fontSize: 10,
+    billFileName: {
+      fontSize: 12,
       color: colors.textMuted,
       marginTop: 4,
+      fontWeight: '400',
+    },
+    billDate: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 4,
+      fontWeight: '400',
+    },
+    billThumbnail: {
+      width: 60,
+      height: 60,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     deleteButton: {
       padding: 8,
     },
     deleteButtonText: {
       fontSize: 18,
+    },
+    selectedText: {
+      fontSize: 15,
+      color: colors.text,
+    },
+    placeholderText: {
+      fontSize: 15,
+      color: colors.textMuted,
+    },
+    photoButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    photoButton: {
+      flex: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      borderRadius: 16,
+      padding: 20,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    photoButtonSingle: {
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      borderRadius: 16,
+      padding: 24,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    photoButtonIcon: {
+      fontSize: 32,
+      marginBottom: 8,
+    },
+    photoButtonText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    imagePreviewContainer: {
+      alignItems: 'center',
+    },
+    imagePreview: {
+      width: '100%',
+      height: 200,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    changePhotoButton: {
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    changePhotoText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.darkCardBg,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      maxHeight: '70%',
+      borderTopWidth: 1,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: colors.border,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    restaurantList: {
+      maxHeight: 400,
+    },
+    restaurantItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    restaurantItemSelected: {
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    },
+    restaurantItemText: {
+      fontSize: 15,
+      color: colors.text,
+      fontWeight: '400',
+    },
+    restaurantItemTextSelected: {
+      fontWeight: '600',
+      color: colors.accent,
+    },
+    checkmark: {
+      fontSize: 18,
+      color: colors.accent,
+      fontWeight: '600',
     },
   });

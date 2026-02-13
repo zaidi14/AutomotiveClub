@@ -1,5 +1,5 @@
 export const colors = {
-  // AGU Automotive Club Brand Colors (from logo)
+  // AGU Automotive Club Brand Colors (from logo) - Minimalistic Modern Design
   primary: '#0A1929',      // Deep Navy (main brand color)
   accent: '#D32F2F',       // Racing Red (from 2022 mark)
   accentLight: '#EF5350',  // Lighter Red
@@ -9,13 +9,14 @@ export const colors = {
   
   // Backgrounds
   darkBg: '#0A1929',       // Deep Navy - Main Background
-  darkCardBg: '#1A2332',   // Card Background
+  darkCardBg: '#1A2332',   // Card Background - Flat design
   lightBg: '#F5F7FA',      // Light mode background
   lightCardBg: '#FFFFFF',  // Light mode cards
   
-  // Text colors
+  // Text colors - Modern Typography
   text: '#FFFFFF',         // Primary white text
   textMuted: '#90A4AE',    // Muted text
+  textSecondary: '#B0BEC5', // Secondary text
   darkText: '#0A1929',     // Navy text (light mode)
   lightText: '#FFFFFF',    // White text
   silver: '#CFD8DC',       // Silver accent
@@ -28,8 +29,9 @@ export const colors = {
   warning: '#FFA726',
   info: '#42A5F5',
   
-  // Borders
+  // Borders - Subtle and minimalistic
   border: 'rgba(255, 255, 255, 0.08)',
+  borderSubtle: 'rgba(255, 255, 255, 0.05)',
   darkBorder: 'rgba(255, 255, 255, 0.08)',
   lightBorder: 'rgba(0, 0, 0, 0.08)',
 };

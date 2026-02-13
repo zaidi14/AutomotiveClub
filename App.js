@@ -16,6 +16,7 @@ import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
 import AutoNewsScreen from './src/screens/AutoNewsScreen';
 import WebPortalScreen from './src/screens/WebPortalScreen';
 import AdminScreen from './src/screens/AdminScreen';
+import AdminBillsScreen from './src/screens/AdminBillsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -50,8 +51,8 @@ function HomeStackNavigator() {
 
 function MainTabs() {
   const { isDark, userData } = useApp();
-  const isAdmin = userData?.role === 'admin';
 
+  // Regular user navigation only
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -76,7 +77,6 @@ function MainTabs() {
           if (route.name === 'Announcements') icon = '📣';
           if (route.name === 'AutoNews') icon = '📰';
           if (route.name === 'Web Portal') icon = '🌐';
-          if (route.name === 'Admin') icon = '⚙️';
 
           return <Text style={{ fontSize: focused ? 22 : 18 }}>{icon}</Text>;
         },
@@ -102,13 +102,6 @@ function MainTabs() {
         component={WebPortalScreen}
         options={{ tabBarLabel: 'Portal' }}
       />
-      {isAdmin && (
-        <Tab.Screen
-          name="Admin"
-          component={AdminScreen}
-          options={{ tabBarLabel: 'Admin' }}
-        />
-      )}
     </Tab.Navigator>
   );
 }
@@ -138,10 +131,27 @@ function AppNavigator() {
     );
   }
 
-  // Regular User Stack (admin tabs are included in MainTabs)
+  // Admin users get admin-only interface without navigation
+  if (isAdmin) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="AdminHome" component={AdminScreen} />
+          <Stack.Screen name="AdminBills" component={AdminBillsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
+  // Regular user navigation
   return (
     <NavigationContainer>
-      {user ? <MainTabs /> : <AuthStack />}
+      <MainTabs />
     </NavigationContainer>
   );
 }

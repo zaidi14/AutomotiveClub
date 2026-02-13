@@ -13,7 +13,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { colors } from '../styles/colors';
 import { db } from '../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
@@ -150,58 +150,61 @@ const createStyles = () =>
       flex: 1,
     },
     scrollContent: {
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 32,
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      paddingBottom: 40,
     },
     headerSection: {
-      marginBottom: 32,
+      marginBottom: 36,
     },
     subtitle: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.accentLight,
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.textMuted,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
-      marginBottom: 4,
+      marginBottom: 6,
     },
     title: {
       fontSize: 32,
-      fontWeight: '800',
+      fontWeight: '700',
       color: colors.text,
-      letterSpacing: 0.5,
+      letterSpacing: -0.5,
       marginBottom: 8,
     },
     description: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
-      fontWeight: '500',
+      fontWeight: '400',
     },
     eventsContainer: {
-      gap: 0,
+      gap: 16,
     },
     emptyState: {
       alignItems: 'center',
-      paddingVertical: 48,
+      paddingVertical: 64,
     },
     emptyIcon: {
       fontSize: 64,
-      marginBottom: 16,
+      marginBottom: 20,
     },
     emptyText: {
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: '600',
       color: colors.text,
       marginBottom: 8,
     },
     emptyDesc: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
+      fontWeight: '400',
     },
     eventCard: {
-      flexDirection: 'row',
-      marginBottom: 0,
-      paddingBottom: 24,
+      backgroundColor: colors.darkCardBg,
+      borderRadius: 20,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     timelineContainer: {
       alignItems: 'center',
@@ -223,30 +226,39 @@ const createStyles = () =>
     },
     eventContent: {
       flex: 1,
-      backgroundColor: colors.darkCardBg,
-      borderRadius: 16,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
     },
     typeBadge: {
       alignSelf: 'flex-start',
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: 8,
-      marginBottom: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: 12,
+      marginBottom: 16,
     },
     typeText: {
       fontSize: 11,
-      fontWeight: '700',
+      fontWeight: '600',
       textTransform: 'uppercase',
-      letterSpacing: 0.4,
+      letterSpacing: 0.5,
     },
     eventTitle: {
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: '600',
       color: colors.text,
+      marginBottom: 8,
+    },
+    eventHeader: {
       marginBottom: 12,
+    },
+    eventDate: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontWeight: '400',
+    },
+    eventDesc: {
+      fontSize: 14,
+      color: colors.textMuted,
+      fontWeight: '400',
+      lineHeight: 22,
     },
     detailsContainer: {
       flexDirection: 'row',
