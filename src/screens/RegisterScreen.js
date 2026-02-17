@@ -84,10 +84,13 @@ export default function RegisterScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
+        {/* Header Section with Club Logo */}
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logo}>🏎️</Text>
+            <Image
+              source={require('../../assets/club-logo.png')}
+              style={{ width: 70, height: 70, resizeMode: 'contain', borderRadius: 16 }}
+            />
           </View>
           <Text style={styles.appName}>AGU Automotive Club</Text>
           <Text style={styles.subtitle}>Join Our Community</Text>

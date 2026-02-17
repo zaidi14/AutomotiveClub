@@ -64,10 +64,13 @@ export default function LoginScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section with Logo */}
+        {/* Header Section with Club Logo */}
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoEmoji}>🏎️</Text>
+            <Image
+              source={require('../../assets/club-logo.png')}
+              style={{ width: 90, height: 90, resizeMode: 'contain', borderRadius: 16 }}
+            />
           </View>
           <Text style={styles.brandName}>Automotive Club</Text>
           <Text style={styles.tagline}>Members Portal</Text>
