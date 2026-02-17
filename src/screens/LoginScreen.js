@@ -10,6 +10,7 @@ import {
   Alert,
   StyleSheet,
   Modal,
+  Image,
 } from 'react-native';
 import { signIn, resetPassword } from '../services/authService';
 import { colors } from '../styles/colors';
@@ -66,12 +67,10 @@ export default function LoginScreen({ navigation }) {
       >
         {/* Header Section with Club Logo */}
         <View style={styles.headerSection}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/adaptive-icon.png')}
-              style={{ width: 90, height: 90, resizeMode: 'contain', borderRadius: 16 }}
-            />
-          </View>
+          <Image
+            source={require('../../assets/icon.png')}
+            style={styles.logo}
+          />
           <Text style={styles.brandName}>Automotive Club</Text>
           <Text style={styles.tagline}>Members Portal</Text>
         </View>
@@ -95,6 +94,7 @@ export default function LoginScreen({ navigation }) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 editable={!loading}
+                accessibilityLabel="Email address"
               />
             </View>
           </View>
@@ -112,12 +112,13 @@ export default function LoginScreen({ navigation }) {
                 onChangeText={setPassword}
                 secureTextEntry
                 editable={!loading}
+                accessibilityLabel="Password"
               />
             </View>
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity onPress={() => { setResetEmail(email); setShowResetModal(true); }} style={styles.forgotPassword}>
+          <TouchableOpacity onPress={() => { setResetEmail(email); setShowResetModal(true); }} style={styles.forgotPassword} accessibilityLabel="Forgot password" accessibilityRole="button">
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -126,6 +127,8 @@ export default function LoginScreen({ navigation }) {
             style={[styles.loginButton, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
+            accessibilityLabel="Sign in"
+            accessibilityRole="button"
           >
             {loading ? (
               <ActivityIndicator color="#fff" size="small" />
@@ -145,6 +148,8 @@ export default function LoginScreen({ navigation }) {
           <TouchableOpacity 
             style={styles.signupButton}
             onPress={() => navigation.navigate('Register')}
+            accessibilityLabel="Create new account"
+            accessibilityRole="button"
           >
             <Text style={styles.signupButtonText}>Create New Account</Text>
           </TouchableOpacity>
@@ -211,26 +216,18 @@ const createStyles = () =>
     scrollContent: {
       flexGrow: 1,
       paddingHorizontal: 24,
-      paddingTop: 48,
-      paddingBottom: 40,
+      paddingTop: 40,
+      paddingBottom: 32,
     },
     headerSection: {
       alignItems: 'center',
-      marginBottom: 56,
+      marginBottom: 28,
     },
-    logoContainer: {
-      width: 104,
-      height: 104,
-      borderRadius: 28,
-      backgroundColor: 'rgba(211, 47, 47, 0.05)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 24,
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.08)',
-    },
-    logoEmoji: {
-      fontSize: 52,
+    logo: {
+      width: 120,
+      height: 120,
+      resizeMode: 'contain',
+      marginBottom: 20,
     },
     brandName: {
       fontSize: 28,
@@ -247,47 +244,46 @@ const createStyles = () =>
       marginBottom: 8,
     },
     tagline: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textMuted,
       fontWeight: '500',
     },
     formContainer: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 24,
       marginBottom: 24,
       borderWidth: 1,
       borderColor: colors.border,
     },
     formTitle: {
-      fontSize: 24,
+      fontSize: 22,
       fontWeight: '700',
       color: colors.text,
-      marginBottom: 8,
+      marginBottom: 6,
     },
     formSubtitle: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
       marginBottom: 24,
     },
     inputWrapper: {
-      marginBottom: 20,
+      marginBottom: 16,
     },
     inputLabel: {
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 8,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
     inputContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 16,
-      paddingHorizontal: 18,
+      borderRadius: 12,
+      paddingHorizontal: 16,
       backgroundColor: 'rgba(255, 255, 255, 0.03)',
       overflow: 'hidden',
     },
@@ -296,29 +292,29 @@ const createStyles = () =>
       marginRight: 16,
     },
     inputIconView: {
-      marginRight: 16,
+      marginRight: 12,
     },
     input: {
       flex: 1,
-      paddingVertical: 18,
+      paddingVertical: 16,
       fontSize: 15,
       color: colors.text,
       fontWeight: '400',
     },
     loginButton: {
       backgroundColor: colors.accent,
-      borderRadius: 16,
-      paddingVertical: 18,
+      borderRadius: 12,
+      paddingVertical: 16,
       paddingHorizontal: 24,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 32,
-      marginBottom: 28,
+      marginTop: 24,
+      marginBottom: 20,
       shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 12 },
+      shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.25,
-      shadowRadius: 20,
-      elevation: 6,
+      shadowRadius: 16,
+      elevation: 4,
     },
     buttonDisabled: {
       backgroundColor: colors.slateGrey,
@@ -332,7 +328,7 @@ const createStyles = () =>
     dividerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: 28,
+      marginVertical: 20,
     },
     divider: {
       flex: 1,
@@ -348,7 +344,7 @@ const createStyles = () =>
     signupButton: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 16,
+      borderRadius: 12,
       paddingVertical: 16,
       paddingHorizontal: 24,
       alignItems: 'center',
@@ -358,8 +354,7 @@ const createStyles = () =>
     signupButtonText: {
       color: colors.text,
       fontSize: 15,
-      fontWeight: '500',
-      letterSpacing: 0,
+      fontWeight: '600',
     },
     forgotPassword: {
       alignSelf: 'flex-end',
@@ -373,7 +368,7 @@ const createStyles = () =>
     },
     footer: {
       alignItems: 'center',
-      marginTop: 32,
+      marginTop: 24,
     },
     footerText: {
       fontSize: 11,
@@ -388,7 +383,7 @@ const createStyles = () =>
     },
     resetModalContent: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 24,
       borderWidth: 1,
       borderColor: colors.border,
@@ -407,8 +402,8 @@ const createStyles = () =>
     },
     resetModalInput: {
       backgroundColor: 'rgba(255, 255, 255, 0.03)',
-      borderRadius: 16,
-      paddingHorizontal: 18,
+      borderRadius: 12,
+      paddingHorizontal: 16,
       paddingVertical: 16,
       fontSize: 15,
       color: colors.text,

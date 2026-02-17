@@ -1,10 +1,13 @@
-import { initializeApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getReactNativePersistence, initializeAuth, getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-// TODO: Replace with your Firebase config
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBJLn0HNv8xrWyNooNsyDm7LEG8at-L_MQ",
   authDomain: "autocard-7abf7.firebaseapp.com",
@@ -15,13 +18,25 @@ const firebaseConfig = {
   measurementId: "G-4SQZJCVBY7"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase via compat (ensures all components register properly)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-// Initialize services with AsyncStorage persistence
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage)
-});
+const app = firebase.app();
+
+// Initialize modular Auth with AsyncStorage persistence
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+} catch (e) {
+  // Already initialized (hot reload) — just get existing instance
+  auth = getAuth(app);
+}
+
+export { auth };
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

@@ -9,6 +9,7 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { signUp } from '../services/authService';
 import { colors } from '../styles/colors';
@@ -86,12 +87,10 @@ export default function RegisterScreen({ navigation }) {
       >
         {/* Header Section with Club Logo */}
         <View style={styles.headerSection}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/adaptive-icon.png')}
-              style={{ width: 70, height: 70, resizeMode: 'contain', borderRadius: 16 }}
-            />
-          </View>
+          <Image
+            source={require('../../assets/icon.png')}
+            style={styles.logo}
+          />
           <Text style={styles.appName}>AGU Automotive Club</Text>
           <Text style={styles.subtitle}>Join Our Community</Text>
         </View>
@@ -199,8 +198,11 @@ export default function RegisterScreen({ navigation }) {
             <TouchableOpacity
               style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}
               onPress={() => setAgreeTerms(!agreeTerms)}
+              accessibilityLabel={agreeTerms ? 'Agreed to terms, tap to uncheck' : 'Tap to agree to terms and conditions'}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: agreeTerms }}
             >
-              {agreeTerms && <Ionicons name="checkmark" size={14} color={colors.text} />}
+              {agreeTerms && <Ionicons name="checkmark" size={18} color={colors.text} />}
             </TouchableOpacity>
             <Text style={styles.termsText}>
               I agree to the{' '}
@@ -213,6 +215,8 @@ export default function RegisterScreen({ navigation }) {
             style={[styles.registerButton, loading && styles.registerButtonDisabled]}
             onPress={handleRegister}
             disabled={loading}
+            accessibilityLabel="Create account"
+            accessibilityRole="button"
           >
             {loading ? (
               <ActivityIndicator size="small" color={colors.text} />
@@ -236,8 +240,10 @@ export default function RegisterScreen({ navigation }) {
             style={styles.loginLink}
             onPress={() => navigation.navigate('Login')}
             disabled={loading}
+            accessibilityLabel="Sign in instead"
+            accessibilityRole="button"
           >
-            <Text style={styles.loginLinkText}>Sign In Instead →</Text>
+            <Text style={styles.loginLinkText}>Sign In Instead</Text>
           </TouchableOpacity>
         </View>
 
@@ -261,41 +267,31 @@ const createStyles = () =>
     },
     scrollContent: {
       flexGrow: 1,
-      paddingHorizontal: 20,
+      paddingHorizontal: 24,
       paddingTop: 20,
       paddingBottom: 32,
     },
     headerSection: {
       alignItems: 'center',
-      marginBottom: 32,
+      marginBottom: 24,
       marginTop: 8,
     },
-    logoContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: colors.primaryDark,
-      borderWidth: 2,
-      borderColor: colors.accent,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
     logo: {
-      fontSize: 40,
+      width: 100,
+      height: 100,
+      resizeMode: 'contain',
+      marginBottom: 16,
     },
     appName: {
       fontSize: 24,
-      fontWeight: '800',
+      fontWeight: '700',
       color: colors.text,
-      letterSpacing: 0.5,
-      marginBottom: 8,
+      marginBottom: 6,
     },
     subtitle: {
       fontSize: 14,
       color: colors.textMuted,
-      fontWeight: '600',
-      letterSpacing: 0.3,
+      fontWeight: '500',
     },
     formContainer: {
       gap: 16,
@@ -305,11 +301,10 @@ const createStyles = () =>
       gap: 8,
     },
     label: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: colors.text,
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
       textTransform: 'uppercase',
-      letterSpacing: 0.3,
     },
     inputContainer: {
       flexDirection: 'row',
@@ -319,7 +314,7 @@ const createStyles = () =>
       borderWidth: 1,
       borderColor: colors.border,
       paddingHorizontal: 14,
-      height: 50,
+      paddingVertical: 14,
       gap: 10,
     },
     inputIcon: {
@@ -343,9 +338,9 @@ const createStyles = () =>
       paddingVertical: 8,
     },
     checkbox: {
-      width: 24,
-      height: 24,
-      borderRadius: 6,
+      width: 44,
+      height: 44,
+      borderRadius: 12,
       borderWidth: 2,
       borderColor: colors.border,
       justifyContent: 'center',
@@ -361,18 +356,18 @@ const createStyles = () =>
       color: colors.text,
     },
     termsText: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textMuted,
       flex: 1,
     },
     termsLink: {
       color: colors.accentLight,
-      fontWeight: '700',
+      fontWeight: '600',
     },
     registerButton: {
       backgroundColor: colors.accent,
       borderRadius: 12,
-      paddingVertical: 14,
+      paddingVertical: 16,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
@@ -380,9 +375,9 @@ const createStyles = () =>
       marginTop: 8,
       shadowColor: colors.accent,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.25,
       shadowRadius: 8,
-      elevation: 5,
+      elevation: 4,
     },
     registerButtonDisabled: {
       backgroundColor: colors.slateGrey,
@@ -393,11 +388,9 @@ const createStyles = () =>
       color: colors.text,
     },
     registerButtonText: {
-      fontSize: 14,
-      fontWeight: '800',
+      fontSize: 15,
+      fontWeight: '600',
       color: colors.text,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
     divider: {
       flexDirection: 'row',
@@ -411,23 +404,21 @@ const createStyles = () =>
       backgroundColor: colors.border,
     },
     dividerText: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textMuted,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     loginLink: {
-      paddingVertical: 12,
-      borderRadius: 10,
+      paddingVertical: 16,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: 'center',
     },
     loginLinkText: {
-      fontSize: 14,
-      fontWeight: '700',
+      fontSize: 15,
+      fontWeight: '600',
       color: colors.accentLight,
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
     },
     footerSection: {
       alignItems: 'center',

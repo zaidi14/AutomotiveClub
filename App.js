@@ -78,30 +78,31 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color }) => {
           let iconName = 'home';
-          if (route.name === 'Announcements') iconName = 'megaphone';
-          if (route.name === 'AutoNews') iconName = 'newspaper';
-          if (route.name === 'Web Portal') iconName = 'globe';
+          if (route.name === 'Home') iconName = 'home';
+          if (route.name === 'Events') iconName = 'megaphone';
+          if (route.name === 'News') iconName = 'newspaper';
+          if (route.name === 'Portal') iconName = 'globe';
           return <Ionicons name={focused ? iconName : `${iconName}-outline`} size={22} color={color} />;
         },
       })}
     >
       <Tab.Screen
-        name="AutoCard"
+        name="Home"
         component={HomeStackNavigator}
-        options={{ tabBarLabel: 'AutoCard' }}
+        options={{ tabBarLabel: 'Home' }}
       />
       <Tab.Screen
-        name="Announcements"
+        name="Events"
         component={AnnouncementsScreen}
         options={{ tabBarLabel: 'Events' }}
       />
       <Tab.Screen
-        name="AutoNews"
+        name="News"
         component={AutoNewsScreen}
         options={{ tabBarLabel: 'News' }}
       />
       <Tab.Screen
-        name="Web Portal"
+        name="Portal"
         component={WebPortalScreen}
         options={{ tabBarLabel: 'Portal' }}
       />
@@ -132,8 +133,8 @@ function AppNavigator() {
     const sub = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
       if (navigationRef.isReady() && user && !isAdmin) {
-        if (data?.screen === 'Events') navigationRef.navigate('Announcements');
-        else if (data?.screen === 'News') navigationRef.navigate('AutoNews');
+        if (data?.screen === 'Events') navigationRef.navigate('Events');
+        else if (data?.screen === 'News') navigationRef.navigate('News');
       }
     });
     return () => sub.remove();
@@ -143,7 +144,7 @@ function AppNavigator() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.darkBg }]}> 
         <Image
-          source={require('./assets/AC.webp')}
+          source={require('./assets/icon.png')}
           style={styles.loadingLogo}
           resizeMode="contain"
         />

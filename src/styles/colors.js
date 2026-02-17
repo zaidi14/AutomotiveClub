@@ -15,12 +15,12 @@ export const colors = {
   
   // Text colors - Modern Typography
   text: '#FFFFFF',         // Primary white text
-  textMuted: '#90A4AE',    // Muted text
-  textSecondary: '#B0BEC5', // Secondary text
+  textMuted: '#B0BEC5',    // Muted text (improved contrast)
+  textSecondary: '#CFD8DC', // Secondary text (improved contrast)
   darkText: '#0A1929',     // Navy text (light mode)
   lightText: '#FFFFFF',    // White text
   silver: '#CFD8DC',       // Silver accent
-  subText: '#78909C',      // Subtle text
+  subText: '#90A4AE',      // Subtle text (improved)
   lightSubText: '#B0BEC5', // Very light text
   
   // Utility colors

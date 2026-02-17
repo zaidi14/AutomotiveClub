@@ -133,7 +133,7 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Go back" accessibilityRole="button">
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile Settings</Text>
@@ -191,6 +191,8 @@ export default function ProfileScreen({ navigation }) {
             style={[styles.saveButton, saving && styles.saveButtonDisabled]}
             onPress={handleSaveProfile}
             disabled={saving}
+            accessibilityLabel="Save profile changes"
+            accessibilityRole="button"
           >
             {saving ? (
               <ActivityIndicator size="small" color="#fff" />
@@ -244,6 +246,8 @@ export default function ProfileScreen({ navigation }) {
             style={[styles.saveButton, changingPassword && styles.saveButtonDisabled]}
             onPress={handleChangePassword}
             disabled={changingPassword}
+            accessibilityLabel="Update password"
+            accessibilityRole="button"
           >
             {changingPassword ? (
               <ActivityIndicator size="small" color="#fff" />
@@ -254,12 +258,12 @@ export default function ProfileScreen({ navigation }) {
         </View>
 
         {/* Sign Out */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} accessibilityLabel="Sign out" accessibilityRole="button">
           <Text style={styles.logoutButtonText}><Ionicons name="log-out-outline" size={16} color="#F44336" />  Sign Out</Text>
         </TouchableOpacity>
 
         {/* Delete Account */}
-        <TouchableOpacity style={styles.deleteAccountButton} onPress={() => setShowDeleteModal(true)}>
+        <TouchableOpacity style={styles.deleteAccountButton} onPress={() => setShowDeleteModal(true)} accessibilityLabel="Delete my account" accessibilityRole="button">
           <Text style={styles.deleteAccountText}>Delete My Account</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -352,7 +356,7 @@ const createStyles = () =>
     },
     section: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 24,
       marginBottom: 20,
       borderWidth: 1,
@@ -360,7 +364,7 @@ const createStyles = () =>
     },
     sectionTitle: {
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: '600',
       color: colors.text,
       marginBottom: 20,
     },
@@ -369,16 +373,15 @@ const createStyles = () =>
     },
     label: {
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 8,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
     input: {
       backgroundColor: 'rgba(255, 255, 255, 0.03)',
-      borderRadius: 16,
-      paddingHorizontal: 18,
+      borderRadius: 12,
+      paddingHorizontal: 16,
       paddingVertical: 16,
       fontSize: 15,
       color: colors.text,
@@ -387,8 +390,8 @@ const createStyles = () =>
     },
     readOnlyField: {
       backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      borderRadius: 16,
-      paddingHorizontal: 18,
+      borderRadius: 12,
+      paddingHorizontal: 16,
       paddingVertical: 16,
       borderWidth: 1,
       borderColor: colors.border,
@@ -399,7 +402,7 @@ const createStyles = () =>
     },
     saveButton: {
       backgroundColor: colors.accent,
-      borderRadius: 16,
+      borderRadius: 12,
       paddingVertical: 16,
       alignItems: 'center',
       marginTop: 8,
@@ -414,7 +417,7 @@ const createStyles = () =>
     },
     logoutButton: {
       backgroundColor: 'rgba(244, 67, 54, 0.1)',
-      borderRadius: 16,
+      borderRadius: 12,
       paddingVertical: 16,
       alignItems: 'center',
       borderWidth: 1,
@@ -445,7 +448,7 @@ const createStyles = () =>
     },
     deleteModalContent: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 24,
       borderWidth: 1,
       borderColor: colors.border,
@@ -464,11 +467,10 @@ const createStyles = () =>
     },
     deleteModalLabel: {
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 8,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
     deleteModalActions: {
       flexDirection: 'row',

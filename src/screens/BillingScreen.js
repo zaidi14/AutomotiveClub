@@ -107,8 +107,42 @@ export default function BillingScreen() {
         setBillImage(result.assets[0]);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to take photo');
+      console.error('Camera error:', error);
+      Alert.alert('Camera Error', 'Could not open the camera. Try picking from gallery instead.\n\n' + (error.message || ''));
     }
+  };
+
+  const pickFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Photo library permission is needed to pick images');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setBillImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Gallery error:', error);
+      Alert.alert('Error', 'Failed to pick image: ' + (error.message || ''));
+    }
+  };
+
+  const handleAddPhoto = () => {
+    Alert.alert('Add Bill Photo', 'Choose an option', [
+      { text: 'Take Photo', onPress: takeBillPhoto },
+      { text: 'Pick from Gallery', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const submitExpense = async () => {
@@ -284,18 +318,19 @@ export default function BillingScreen() {
                 />
                 <TouchableOpacity
                   style={styles.changePhotoButton}
-                  onPress={takeBillPhoto}
+                  onPress={handleAddPhoto}
                 >
-                  <Text style={styles.changePhotoText}>Retake Photo</Text>
+                  <Text style={styles.changePhotoText}>Change Photo</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 style={styles.photoButtonSingle}
-                onPress={takeBillPhoto}
+                onPress={handleAddPhoto}
               >
                 <Ionicons name="camera" size={32} color={colors.text} />
-                <Text style={styles.photoButtonText}>Take Photo</Text>
+                <Text style={styles.photoButtonText}>Add Photo</Text>
+                <Text style={styles.photoButtonHint}>Camera or Gallery</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -808,6 +843,12 @@ const createStyles = () =>
       fontSize: 13,
       fontWeight: '500',
       color: colors.text,
+    },
+    photoButtonHint: {
+      fontSize: 11,
+      fontWeight: '400',
+      color: colors.textMuted,
+      marginTop: 2,
     },
     imagePreviewContainer: {
       alignItems: 'center',

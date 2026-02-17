@@ -51,27 +51,21 @@ export default function HomeScreen({ navigation }) {
   const stats = [
     {
       id: 1,
-      label: 'Total Orders',
-      value: userData.totalOrders || 0,
       displayValue: userData.totalOrders || 0,
-      icon: '⊙',
-      subtitle: 'TOTAL ORDERS',
+      subtitle: 'Orders',
+      iconName: 'receipt-outline',
     },
     {
       id: 2,
-      label: 'Amount Spent',
-      value: `₺${(userData.lifetimeSpend || 0).toFixed(0)}`,
       displayValue: `₺${(userData.lifetimeSpend || 0).toFixed(0)}`,
-      icon: '⛽',
-      subtitle: 'TOTAL SPENT',
+      subtitle: 'Spent',
+      iconName: 'wallet-outline',
     },
     {
       id: 3,
-      label: 'Total Savings',
-      value: `₺${(userData.lifetimeSavings || 0).toFixed(0)}`,
       displayValue: `₺${(userData.lifetimeSavings || 0).toFixed(0)}`,
-      icon: '◉',
-      subtitle: 'SAVED',
+      subtitle: 'Saved',
+      iconName: 'cash-outline',
     },
   ];
 
@@ -94,11 +88,11 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.userName}>{userData.name || 'Member'}</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => navigation.navigate('Profile')}>
-              <Ionicons name="settings-outline" size={22} color={colors.text} />
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profile settings" accessibilityRole="button">
+              <Ionicons name="person-outline" size={22} color={colors.text} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-              <Ionicons name="power" size={22} color={colors.text} />
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} accessibilityLabel="Log out" accessibilityRole="button">
+              <Ionicons name="log-out-outline" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -122,36 +116,37 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Stats Section - Dashboard Gauges */}
+        {/* Stats Section */}
         <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>⚡ DASHBOARD</Text>
+          <Text style={styles.sectionTitle}>Dashboard</Text>
           <View style={styles.statsGrid}>
             {stats.map((stat) => (
               <View key={stat.id} style={styles.statCard}>
-                <View style={styles.gaugeContainer}>
-                  <View style={styles.gaugeOuter}>
-                    <View style={styles.gaugeInner}>
-                      <Text style={styles.statIconText}>{stat.displayValue}</Text>
-                    </View>
-                  </View>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name={stat.iconName} size={20} color={colors.accent} />
                 </View>
+                <Text style={styles.statValue}>{stat.displayValue}</Text>
                 <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Quick Actions - Racing Theme */}
+        {/* Quick Actions */}
         <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>🏁 QUICK ACCESS</Text>
+          <Text style={styles.sectionTitle}>Quick Access</Text>
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => navigation.navigate('Billing')}
+            accessibilityLabel="Upload bill"
+            accessibilityRole="button"
           >
-            <View style={styles.racingStripe} />
+            <View style={styles.actionIconContainer}>
+              <Ionicons name="camera-outline" size={24} color="#fff" />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Upload Bill</Text>
-              <Text style={styles.actionDesc}>Track & Add your purchases</Text>
+              <Text style={styles.actionDesc}>Track & add your purchases</Text>
             </View>
             <Ionicons name="chevron-forward" size={22} color="#fff" />
           </TouchableOpacity>
@@ -170,9 +165,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* Developer Credit */}
         <View style={styles.creditSection}>
-          <Text style={styles.creditText}>Developed by</Text>
-          <Text style={styles.creditName}>Mojiz Zaidi</Text>
-          <Text style={styles.creditYear}>© 2026</Text>
+          <Text style={styles.creditText}>© 2026 AGU Automotive Club</Text>
         </View>
       </ScrollView>
     </View>
@@ -254,9 +247,9 @@ const createStyles = () =>
     },
     memberCard: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 24,
-      marginBottom: 36,
+      marginBottom: 28,
       borderWidth: 1,
       borderColor: colors.border,
     },
@@ -304,15 +297,13 @@ const createStyles = () =>
       backgroundColor: colors.border,
     },
     statsSection: {
-      marginBottom: 36,
+      marginBottom: 28,
     },
     sectionTitle: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: '600',
-      color: colors.textMuted,
-      marginBottom: 20,
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
+      color: colors.textSecondary,
+      marginBottom: 16,
     },
     statsGrid: {
       flexDirection: 'row',
@@ -321,52 +312,35 @@ const createStyles = () =>
     statCard: {
       backgroundColor: colors.darkCardBg,
       borderRadius: 16,
-      padding: 14,
+      paddingVertical: 18,
+      paddingHorizontal: 12,
       alignItems: 'center',
       borderWidth: 1,
       borderColor: colors.border,
       flex: 1,
     },
-    gaugeContainer: {
-      marginBottom: 16,
-    },
-    gaugeOuter: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      borderWidth: 2,
-      borderColor: colors.accent,
+    statIconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: 'rgba(211, 47, 47, 0.1)',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(211, 47, 47, 0.05)',
-      shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 4,
+      marginBottom: 12,
     },
-    gaugeInner: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
-      borderWidth: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'transparent',
-    },
-    statIconText: {
-      fontSize: 13,
-      fontWeight: '600',
+    statValue: {
+      fontSize: 22,
+      fontWeight: '700',
       color: colors.text,
+      marginBottom: 4,
     },
     statSubtitle: {
       fontSize: 11,
       color: colors.textMuted,
       fontWeight: '500',
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
+      letterSpacing: 0.3,
     },
-    statValue: {
+    statValueLegacy: {
       fontSize: 24,
       fontWeight: '800',
       color: colors.text,
@@ -380,29 +354,25 @@ const createStyles = () =>
       letterSpacing: 0.3,
     },
     actionsSection: {
-      marginBottom: 36,
+      marginBottom: 28,
     },
     actionCard: {
       backgroundColor: colors.accent,
-      borderRadius: 20,
-      padding: 24,
+      borderRadius: 16,
+      padding: 20,
       flexDirection: 'row',
       alignItems: 'center',
-      borderWidth: 0,
       shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 8 },
+      shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.2,
-      shadowRadius: 16,
+      shadowRadius: 12,
       elevation: 4,
     },
-    racingStripe: {
-      display: 'none',
-    },
     actionIconContainer: {
-      width: 56,
-      height: 56,
-      borderRadius: 16,
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      width: 48,
+      height: 48,
+      borderRadius: 14,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 16,
@@ -436,7 +406,7 @@ const createStyles = () =>
     },
     favCard: {
       backgroundColor: colors.darkCardBg,
-      borderRadius: 20,
+      borderRadius: 16,
       padding: 20,
       flexDirection: 'row',
       alignItems: 'center',
@@ -455,29 +425,14 @@ const createStyles = () =>
     },
     creditSection: {
       alignItems: 'center',
-      paddingVertical: 32,
-      marginTop: 24,
+      paddingVertical: 24,
+      marginTop: 16,
       borderTopWidth: 1,
       borderTopColor: colors.border,
     },
     creditText: {
       fontSize: 11,
-      color: colors.textMuted,
+      color: colors.subText,
       fontWeight: '400',
-      marginBottom: 4,
-      letterSpacing: 1,
-      textTransform: 'uppercase',
-    },
-    creditName: {
-      fontSize: 16,
-      color: colors.accent,
-      fontWeight: '700',
-      marginBottom: 4,
-      letterSpacing: 0.5,
-    },
-    creditYear: {
-      fontSize: 10,
-      color: colors.textMuted,
-      fontWeight: '300',
     },
   });
