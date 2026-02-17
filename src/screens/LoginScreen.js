@@ -68,7 +68,7 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../assets/club-logo.png')}
+              source={require('../../assets/adaptive-icon.png')}
               style={{ width: 90, height: 90, resizeMode: 'contain', borderRadius: 16 }}
             />
           </View>

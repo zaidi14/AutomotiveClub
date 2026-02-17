@@ -88,7 +88,7 @@ export default function RegisterScreen({ navigation }) {
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../assets/club-logo.png')}
+              source={require('../../assets/adaptive-icon.png')}
               style={{ width: 70, height: 70, resizeMode: 'contain', borderRadius: 16 }}
             />
           </View>
