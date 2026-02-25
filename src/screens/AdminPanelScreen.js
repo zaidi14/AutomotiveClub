@@ -34,8 +34,8 @@ export default function AdminPanelScreen({ navigation }) {
       description: 'Create, edit, and delete announcements and events',
       icon: '📢',
       screen: 'AdminAnnouncements',
-      color: '#3282b8',
-      bgColor: 'rgba(50, 130, 184, 0.1)',
+      color: '#0177E3',
+      bgColor: 'rgba(1, 119, 227, 0.1)',
     },
     {
       id: 2,
@@ -43,8 +43,8 @@ export default function AdminPanelScreen({ navigation }) {
       description: 'Upload and manage club newsletters and documents',
       icon: '📰',
       screen: 'AdminNewsletters',
-      color: '#10B981',
-      bgColor: 'rgba(16, 185, 129, 0.1)',
+      color: '#0177E3',
+      bgColor: 'rgba(1, 119, 227, 0.08)',
     },
   ];
 
@@ -173,19 +173,11 @@ const createStyles = () =>
       width: 48,
       height: 48,
       borderRadius: 12,
-<<<<<<< HEAD
-      backgroundColor: colors.primaryDark,
+      backgroundColor: 'rgba(1, 119, 227, 0.15)',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.accent,
-=======
-      backgroundColor: 'rgba(200, 16, 46, 0.2)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: 'rgba(200, 16, 46, 0.3)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
+      borderColor: 'rgba(1, 119, 227, 0.3)',
     },
     logoutIcon: {
       fontSize: 20,
@@ -270,11 +262,7 @@ const createStyles = () =>
       width: 32,
       height: 32,
       borderRadius: 8,
-<<<<<<< HEAD
-      backgroundColor: colors.primaryDark,
-=======
-      backgroundColor: 'rgba(15, 76, 117, 0.1)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
+      backgroundColor: 'rgba(1, 119, 227, 0.1)',
       justifyContent: 'center',
       alignItems: 'center',
     },

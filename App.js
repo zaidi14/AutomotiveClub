@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     height: 200,
   },
   offlineBanner: {
-    backgroundColor: '#F44336',
+    backgroundColor: '#EF4444',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

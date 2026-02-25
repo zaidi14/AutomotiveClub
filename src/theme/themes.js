@@ -1,18 +1,18 @@
 export const themes = {
   light: {
-    page: 'bg-[#001f3f]',      // Deep Navy
-    card: 'bg-[#003366]',       // Lighter Navy
+    page: 'bg-[#212A37]',      // Anthracite Blue
+    card: 'bg-[#2A3545]',       // Lighter Anthracite
     text: 'text-white',         // White text
-    sub: 'text-[#B0BEC5]',      // Muted light text
-    input: 'bg-[#003366] text-white border-[#003d5c]',
-    placeholder: '#B0BEC5'
+    sub: 'text-[#A0AEBF]',      // Muted light text
+    input: 'bg-[#2A3545] text-white border-[#3A4555]',
+    placeholder: '#A0AEBF'
   },
   dark: {
-    page: 'bg-[#001f3f]',       // Deep Navy
-    card: 'bg-[#003366]',       // Lighter Navy
+    page: 'bg-[#212A37]',       // Anthracite Blue
+    card: 'bg-[#2A3545]',       // Lighter Anthracite
     text: 'text-white',         // White text
-    sub: 'text-[#B0BEC5]',      // Muted light text
-    input: 'bg-[#003366] text-white border-[#003d5c]',
-    placeholder: '#CFD8DC'
+    sub: 'text-[#A0AEBF]',      // Muted light text
+    input: 'bg-[#2A3545] text-white border-[#3A4555]',
+    placeholder: '#C0C8D4'
   }
 };

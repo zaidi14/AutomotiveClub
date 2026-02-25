@@ -576,7 +576,7 @@ export default function AdminScreen({ navigation }) {
                   <Ionicons name="create-outline" size={18} color={colors.accent} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => deleteEvent(event.id)}>
-                  <Ionicons name="trash-outline" size={18} color="#F44336" />
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -615,7 +615,7 @@ export default function AdminScreen({ navigation }) {
                   <Ionicons name="create-outline" size={18} color={colors.accent} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => deleteNews(item.id)}>
-                  <Ionicons name="trash-outline" size={18} color="#F44336" />
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -889,15 +889,15 @@ const createStyles = () =>
     logoutButton: {
       paddingHorizontal: 16,
       paddingVertical: 10,
-      backgroundColor: 'rgba(244, 67, 54, 0.1)',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#F44336',
+      borderColor: '#EF4444',
     },
     logoutButtonText: {
       fontSize: 13,
       fontWeight: '600',
-      color: '#F44336',
+      color: '#EF4444',
     },
     section: {
       padding: 20,
@@ -1049,12 +1049,12 @@ const createStyles = () =>
       alignItems: 'center',
     },
     rejectButton: {
-      backgroundColor: 'rgba(244, 67, 54, 0.1)',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
       borderWidth: 1,
-      borderColor: '#F44336',
+      borderColor: '#EF4444',
     },
     rejectButtonText: {
-      color: '#F44336',
+      color: '#EF4444',
       fontWeight: '600',
       fontSize: 14,
     },

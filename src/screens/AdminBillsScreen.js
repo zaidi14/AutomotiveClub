@@ -403,12 +403,12 @@ const createStyles = () =>
       alignItems: 'center',
     },
     rejectButton: {
-      backgroundColor: 'rgba(244, 67, 54, 0.1)',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
       borderWidth: 1,
-      borderColor: '#F44336',
+      borderColor: '#EF4444',
     },
     rejectButtonText: {
-      color: '#F44336',
+      color: '#EF4444',
       fontWeight: '600',
       fontSize: 14,
     },

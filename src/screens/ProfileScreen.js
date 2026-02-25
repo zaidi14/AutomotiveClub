@@ -259,7 +259,7 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Sign Out */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} accessibilityLabel="Sign out" accessibilityRole="button">
-          <Text style={styles.logoutButtonText}><Ionicons name="log-out-outline" size={16} color="#F44336" />  Sign Out</Text>
+          <Text style={styles.logoutButtonText}><Ionicons name="log-out-outline" size={16} color="#EF4444" />  Sign Out</Text>
         </TouchableOpacity>
 
         {/* Delete Account */}
@@ -416,18 +416,18 @@ const createStyles = () =>
       color: '#fff',
     },
     logoutButton: {
-      backgroundColor: 'rgba(244, 67, 54, 0.1)',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: '#F44336',
+      borderColor: '#EF4444',
       marginBottom: 20,
     },
     logoutButtonText: {
       fontSize: 15,
       fontWeight: '600',
-      color: '#F44336',
+      color: '#EF4444',
     },
     deleteAccountButton: {
       paddingVertical: 16,
@@ -437,7 +437,7 @@ const createStyles = () =>
     deleteAccountText: {
       fontSize: 14,
       fontWeight: '500',
-      color: '#F44336',
+      color: '#EF4444',
       textDecorationLine: 'underline',
     },
     deleteModalOverlay: {
@@ -456,7 +456,7 @@ const createStyles = () =>
     deleteModalTitle: {
       fontSize: 20,
       fontWeight: '700',
-      color: '#F44336',
+      color: '#EF4444',
       marginBottom: 12,
     },
     deleteModalDesc: {
@@ -494,7 +494,7 @@ const createStyles = () =>
       flex: 1,
       paddingVertical: 14,
       borderRadius: 12,
-      backgroundColor: '#F44336',
+      backgroundColor: '#EF4444',
       alignItems: 'center',
     },
     deleteModalConfirmText: {

@@ -439,8 +439,8 @@ export default function BillingScreen() {
                     <View style={styles.billInfo}>
                       <Text style={styles.billName}>{expense.restaurant}</Text>
                       <Text style={styles.billAmount}>₺{expense.amount.toFixed(2)}</Text>
-                      <View style={[styles.statusBadge, { backgroundColor: expense.status === 'approved' ? 'rgba(76, 175, 80, 0.1)' : expense.status === 'rejected' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(255, 167, 38, 0.1)' }]}>
-                        <Text style={[styles.statusText, { color: expense.status === 'approved' ? '#4CAF50' : expense.status === 'rejected' ? '#F44336' : '#FFA726' }]}>
+                      <View style={[styles.statusBadge, { backgroundColor: expense.status === 'approved' ? 'rgba(34, 197, 94, 0.1)' : expense.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)' }]}>
+                        <Text style={[styles.statusText, { color: expense.status === 'approved' ? '#22C55E' : expense.status === 'rejected' ? '#EF4444' : '#F59E0B' }]}>
                           {(expense.status || 'pending').toUpperCase()}
                         </Text>
                       </View>
@@ -466,7 +466,7 @@ export default function BillingScreen() {
                         style={styles.deleteButton}
                         onPress={() => deleteExpense(expense.id)}
                       >
-                        <Ionicons name="trash-outline" size={18} color="#F44336" />
+                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
                       </TouchableOpacity>
                     )}
                   </View>

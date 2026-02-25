@@ -9,7 +9,7 @@ export const createTheme = (isDark = false) => {
 const lightTheme = {
   container: {
     flex: 1,
-    backgroundColor: colors.darkBg, // Navy background
+    backgroundColor: colors.darkBg, // Anthracite Blue background
   },
   safeArea: {
     flex: 1,
@@ -20,7 +20,7 @@ const lightTheme = {
     backgroundColor: colors.darkBg,
   },
   card: {
-    backgroundColor: colors.darkCardBg, // Lighter Navy cards
+    backgroundColor: colors.darkCardBg, // Lighter Anthracite cards
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
@@ -52,7 +52,7 @@ const lightTheme = {
     fontSize: 14,
   },
   button: {
-    backgroundColor: colors.accent, // Racing Red
+    backgroundColor: colors.accent, // Club Blue
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -74,7 +74,7 @@ const lightTheme = {
     fontSize: 16,
     color: colors.lightText,
     marginVertical: 8,
-    backgroundColor: colors.darkCardBg, // Lighter Navy for inputs
+    backgroundColor: colors.darkCardBg, // Lighter Anthracite for inputs
   },
   inputPlaceholder: colors.subText,
   header: {
@@ -94,7 +94,7 @@ const lightTheme = {
 const darkTheme = {
   container: {
     flex: 1,
-    backgroundColor: colors.darkBg, // Deep Navy
+    backgroundColor: colors.darkBg, // Anthracite Blue
   },
   safeArea: {
     flex: 1,
@@ -105,7 +105,7 @@ const darkTheme = {
     backgroundColor: colors.darkBg,
   },
   card: {
-    backgroundColor: colors.darkCardBg, // Lighter Navy
+    backgroundColor: colors.darkCardBg, // Lighter Anthracite
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
@@ -137,7 +137,7 @@ const darkTheme = {
     fontSize: 14,
   },
   button: {
-    backgroundColor: colors.accent, // Racing Red
+    backgroundColor: colors.accent, // Club Blue
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -159,7 +159,7 @@ const darkTheme = {
     fontSize: 16,
     color: colors.lightText,
     marginVertical: 8,
-    backgroundColor: colors.darkCardBg, // Lighter Navy for inputs
+    backgroundColor: colors.darkCardBg, // Lighter Anthracite for inputs
   },
   inputPlaceholder: colors.lightSubText,
   header: {

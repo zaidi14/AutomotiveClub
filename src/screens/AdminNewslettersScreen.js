@@ -582,11 +582,7 @@ const createStyles = () =>
       gap: 6,
     },
     topicTag: {
-<<<<<<< HEAD
-      backgroundColor: colors.primaryDark,
-=======
-      backgroundColor: 'rgba(10, 35, 66, 0.5)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
+      backgroundColor: 'rgba(33, 42, 55, 0.6)',
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 5,
@@ -665,11 +661,7 @@ const createStyles = () =>
       letterSpacing: 0.3,
     },
     input: {
-<<<<<<< HEAD
       backgroundColor: colors.darkCardBg,
-=======
-      backgroundColor: 'rgba(0, 0, 0, 0.3)',
->>>>>>> 9e71fa56e040ca1fb8aa85bbd43420457a997f28
       borderRadius: 10,
       paddingHorizontal: 14,
       paddingVertical: 12,

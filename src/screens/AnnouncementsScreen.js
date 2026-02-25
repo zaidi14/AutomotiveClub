@@ -41,10 +41,10 @@ export default function AnnouncementsScreen() {
 
   const getTypeColor = (type) => {
     const typeColors = {
-      Conference: { bg: 'rgba(50, 130, 184, 0.1)', color: '#3282b8' },
-      Discussion: { bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
-      Entertainment: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' },
-      Activity: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' },
+      Conference: { bg: 'rgba(1, 119, 227, 0.1)', color: '#0177E3' },
+      Discussion: { bg: 'rgba(33, 42, 55, 0.3)', color: '#A0AEBF' },
+      Entertainment: { bg: 'rgba(1, 119, 227, 0.15)', color: '#3393E8' },
+      Activity: { bg: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' },
     };
     return typeColors[type] || typeColors.Conference;
   };
@@ -265,7 +265,7 @@ const createStyles = () =>
       marginTop: 12,
       paddingVertical: 10,
       paddingHorizontal: 12,
-      backgroundColor: 'rgba(15, 76, 117, 0.2)',
+      backgroundColor: 'rgba(1, 119, 227, 0.15)',
       borderRadius: 8,
       borderWidth: 1,
       borderColor: colors.accent,

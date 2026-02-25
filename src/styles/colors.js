@@ -1,37 +1,37 @@
 export const colors = {
-  // AGU Automotive Club Brand Colors (from logo) - Minimalistic Modern Design
-  primary: '#0A1929',      // Deep Navy (main brand color)
-  accent: '#D32F2F',       // Racing Red (from 2022 mark)
-  accentLight: '#EF5350',  // Lighter Red
-  primaryLight: '#1A2332', // Lighter Navy
-  primaryDark: '#000510',  // Darker Navy
-  slateGrey: '#37474F',    // Modern slate
+  // Club Brand Colors - Blue, Black, White & Anthracite Blue
+  primary: '#212A37',      // Anthracite Blue (main brand color)
+  accent: '#0177E3',       // Club Blue (primary accent)
+  accentLight: '#3393E8',  // Lighter Blue
+  primaryLight: '#2A3545', // Lighter Anthracite
+  primaryDark: '#000000',  // Black
+  slateGrey: '#2A3545',    // Anthracite variant
   
   // Backgrounds
-  darkBg: '#0A1929',       // Deep Navy - Main Background
-  darkCardBg: '#1A2332',   // Card Background - Flat design
-  lightBg: '#F5F7FA',      // Light mode background
-  lightCardBg: '#FFFFFF',  // Light mode cards
+  darkBg: '#212A37',       // Anthracite Blue - Main Background
+  darkCardBg: '#2A3545',   // Card Background - Lighter Anthracite
+  lightBg: '#F0F4F8',      // Light mode background
+  lightCardBg: '#FFFFFF',  // White cards
   
   // Text colors - Modern Typography
   text: '#FFFFFF',         // Primary white text
-  textMuted: '#B0BEC5',    // Muted text (improved contrast)
-  textSecondary: '#CFD8DC', // Secondary text (improved contrast)
-  darkText: '#0A1929',     // Navy text (light mode)
+  textMuted: '#A0AEBF',   // Muted text (improved contrast)
+  textSecondary: '#C0C8D4', // Secondary text
+  darkText: '#212A37',     // Anthracite text (light mode)
   lightText: '#FFFFFF',    // White text
-  silver: '#CFD8DC',       // Silver accent
-  subText: '#90A4AE',      // Subtle text (improved)
-  lightSubText: '#B0BEC5', // Very light text
+  silver: '#C0C8D4',       // Silver accent
+  subText: '#8A97A8',      // Subtle text
+  lightSubText: '#A0AEBF', // Light text
   
   // Utility colors
-  success: '#4CAF50',
-  error: '#D32F2F',        // Racing Red for errors
-  warning: '#FFA726',
-  info: '#42A5F5',
+  success: '#22C55E',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  info: '#0177E3',         // Club Blue for info
   
   // Borders - Subtle and minimalistic
-  border: 'rgba(255, 255, 255, 0.08)',
-  borderSubtle: 'rgba(255, 255, 255, 0.05)',
-  darkBorder: 'rgba(255, 255, 255, 0.08)',
-  lightBorder: 'rgba(0, 0, 0, 0.08)',
+  border: 'rgba(255, 255, 255, 0.10)',
+  borderSubtle: 'rgba(255, 255, 255, 0.06)',
+  darkBorder: 'rgba(255, 255, 255, 0.10)',
+  lightBorder: 'rgba(0, 0, 0, 0.10)',
 };
